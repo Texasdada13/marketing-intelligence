@@ -1,0 +1,316 @@
+{% extends "base.html" %}
+
+{% block title %}AI CMO Consultant{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chat-container {
+        height: calc(100vh - 200px);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 1rem;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 12px;
+    }
+
+    .message {
+        max-width: 85%;
+        margin-bottom: 1rem;
+        padding: 1rem;
+        border-radius: 12px;
+    }
+
+    .message.user {
+        background: var(--primary-gradient);
+        margin-left: auto;
+        color: white;
+    }
+
+    .message.assistant {
+        background: var(--card-bg);
+        border: 1px solid rgba(233, 30, 99, 0.2);
+    }
+
+    .message-content {
+        white-space: pre-wrap;
+        word-wrap: break-word;
+    }
+
+    .chat-input-area {
+        padding: 1rem;
+        background: var(--card-bg);
+        border-radius: 12px;
+        margin-top: 1rem;
+    }
+
+    .mode-selector {
+        background: var(--card-bg);
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .mode-btn {
+        background: transparent;
+        border: 1px solid rgba(233, 30, 99, 0.3);
+        color: #e0e0e0;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        margin: 0.25rem;
+        transition: all 0.2s;
+    }
+
+    .mode-btn:hover, .mode-btn.active {
+        background: var(--primary-gradient);
+        border-color: transparent;
+        color: white;
+    }
+
+    .suggested-prompts {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .prompt-btn {
+        background: rgba(233, 30, 99, 0.1);
+        border: 1px solid rgba(233, 30, 99, 0.3);
+        color: #e0e0e0;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+    }
+
+    .prompt-btn:hover {
+        background: rgba(233, 30, 99, 0.2);
+        color: white;
+    }
+
+    .typing-indicator {
+        display: none;
+        padding: 1rem;
+        color: #aaa;
+    }
+
+    .typing-indicator.show {
+        display: block;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-lg-3">
+            <div class="mode-selector">
+                <h6 class="mb-3"><i class="bi bi-sliders me-2"></i>Conversation Mode</h6>
+                <div id="modeButtons">
+                    {% for mode, desc in modes.items() %}
+                    <button class="mode-btn w-100 text-start mb-2 {% if loop.first %}active{% endif %}"
+                            data-mode="{{ mode }}" title="{{ desc }}">
+                        <i class="bi bi-{% if mode == 'general' %}chat{% elif mode == 'campaign_analysis' %}megaphone{% elif mode == 'channel_optimization' %}diagram-3{% elif mode == 'content_strategy' %}file-text{% elif mode == 'funnel_analysis' %}funnel{% elif mode == 'roi_review' %}graph-up{% elif mode == 'benchmark_discussion' %}bar-chart{% else %}calendar-check{% endif %} me-2"></i>
+                        {{ desc }}
+                    </button>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-9">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-chat-dots me-2"></i>AI CMO Consultant
+                        <span id="currentMode" class="badge bg-primary ms-2">General</span>
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="chat-container">
+                        <div class="chat-messages" id="chatMessages">
+                            <div class="message assistant">
+                                <div class="message-content">
+                                    Hello! I'm your AI CMO consultant. I can help you with:
+
+- Campaign performance analysis and optimization
+- Marketing channel mix and budget allocation
+- Content strategy and effectiveness
+- Funnel optimization and conversion improvement
+- Marketing ROI and spend efficiency
+- Industry benchmarks and competitive analysis
+
+How can I help you today?
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="typing-indicator" id="typingIndicator">
+                            <i class="bi bi-three-dots"></i> AI CMO is thinking...
+                        </div>
+
+                        <div class="suggested-prompts" id="suggestedPrompts">
+                            <button class="prompt-btn" onclick="sendMessage('What marketing metrics should I track?')">
+                                What metrics should I track?
+                            </button>
+                            <button class="prompt-btn" onclick="sendMessage('How can I improve our marketing ROI?')">
+                                Improve marketing ROI
+                            </button>
+                            <button class="prompt-btn" onclick="sendMessage('What is a good customer acquisition cost?')">
+                                Benchmark CAC
+                            </button>
+                        </div>
+
+                        <div class="chat-input-area">
+                            <form id="chatForm" class="d-flex gap-2">
+                                <input type="text" id="messageInput" class="form-control bg-dark text-light border-secondary"
+                                       placeholder="Ask your marketing question..." autocomplete="off">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-send"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentSessionId = null;
+let currentMode = 'general';
+
+// Initialize session
+async function initSession() {
+    try {
+        const response = await fetch('/api/chat/sessions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ mode: currentMode })
+        });
+        const data = await response.json();
+        currentSessionId = data.id;
+    } catch (error) {
+        console.error('Error creating session:', error);
+    }
+}
+
+// Send message
+async function sendMessage(message) {
+    if (!message.trim()) return;
+    if (!currentSessionId) await initSession();
+
+    const messageInput = document.getElementById('messageInput');
+    const chatMessages = document.getElementById('chatMessages');
+    const typingIndicator = document.getElementById('typingIndicator');
+
+    // Add user message
+    chatMessages.innerHTML += `
+        <div class="message user">
+            <div class="message-content">${escapeHtml(message)}</div>
+        </div>
+    `;
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+
+    messageInput.value = '';
+    typingIndicator.classList.add('show');
+
+    try {
+        const response = await fetch(`/api/chat/sessions/${currentSessionId}/stream`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message })
+        });
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let assistantMessage = '';
+
+        // Add empty assistant message container
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'message assistant';
+        messageDiv.innerHTML = '<div class="message-content"></div>';
+        chatMessages.appendChild(messageDiv);
+        const contentDiv = messageDiv.querySelector('.message-content');
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            const chunk = decoder.decode(value);
+            const lines = chunk.split('\n');
+
+            for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                    const data = line.slice(6);
+                    if (data === '[DONE]') {
+                        typingIndicator.classList.remove('show');
+                    } else {
+                        assistantMessage += data;
+                        contentDiv.textContent = assistantMessage;
+                        chatMessages.scrollTop = chatMessages.scrollHeight;
+                    }
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        typingIndicator.classList.remove('show');
+        chatMessages.innerHTML += `
+            <div class="message assistant">
+                <div class="message-content text-danger">Sorry, there was an error processing your request.</div>
+            </div>
+        `;
+    }
+}
+
+// Form submit handler
+document.getElementById('chatForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const message = document.getElementById('messageInput').value;
+    sendMessage(message);
+});
+
+// Mode selection
+document.querySelectorAll('.mode-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+        document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentMode = btn.dataset.mode;
+        document.getElementById('currentMode').textContent = btn.textContent.trim();
+
+        // Create new session with new mode
+        currentSessionId = null;
+        await initSession();
+
+        // Update suggested prompts
+        try {
+            const response = await fetch(`/api/chat/prompts/${currentMode}`);
+            const data = await response.json();
+            const container = document.getElementById('suggestedPrompts');
+            container.innerHTML = data.prompts.map(p =>
+                `<button class="prompt-btn" onclick="sendMessage('${escapeHtml(p)}')">${escapeHtml(p)}</button>`
+            ).join('');
+        } catch (error) {
+            console.error('Error loading prompts:', error);
+        }
+    });
+});
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Initialize on load
+initSession();
+</script>
+{% endblock %}
