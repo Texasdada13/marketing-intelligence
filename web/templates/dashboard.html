@@ -2,55 +2,200 @@
 
 {% block title %}Dashboard{% endblock %}
 
+{% block extra_css %}
+<style>
+    .metric-card {
+        background: var(--card-bg);
+        border-radius: 12px;
+        padding: 1.5rem;
+        border-left: 4px solid var(--accent-color);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .metric-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(233, 30, 99, 0.2);
+    }
+    .metric-value {
+        font-size: 2.2rem;
+        font-weight: 700;
+        background: var(--primary-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    .metric-label { color: #888; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; }
+    .metric-change { font-size: 0.85rem; }
+    .metric-change.positive { color: #4caf50; }
+    .metric-change.negative { color: #f44336; }
+    .chart-container { background: var(--card-bg); border-radius: 12px; padding: 1.5rem; height: 350px; }
+    .org-selector { background: var(--card-bg); border-radius: 12px; padding: 1rem; margin-bottom: 1.5rem; }
+    .quick-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .quick-actions .btn { font-size: 0.85rem; }
+    .loading-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(26, 26, 46, 0.9); display: flex; align-items: center; justify-content: center; border-radius: 12px; z-index: 10; }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container py-4">
+    <!-- Header with Controls -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2><i class="bi bi-speedometer2 me-2"></i>Marketing Dashboard</h2>
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addOrgModal">
-            <i class="bi bi-plus-lg me-1"></i>Add Organization
-        </button>
-    </div>
-
-    {% if organizations %}
-    <div class="row g-4">
-        {% for org in organizations %}
-        <div class="col-md-6 col-lg-4">
-            <div class="card h-100">
-                <div class="card-header">
-                    <h5 class="mb-0">{{ org.name }}</h5>
-                </div>
-                <div class="card-body">
-                    <p class="text-muted mb-2">
-                        <i class="bi bi-building me-1"></i>{{ org.industry or 'Not specified' }}
-                    </p>
-                    <p class="text-muted mb-2">
-                        <i class="bi bi-people me-1"></i>{{ org.size or 'Not specified' }}
-                    </p>
-                    {% if org.annual_marketing_budget %}
-                    <p class="mb-3">
-                        <i class="bi bi-cash me-1"></i>Budget: ${{ "{:,.0f}".format(org.annual_marketing_budget) }}
-                    </p>
-                    {% endif %}
-                    <a href="/organization/{{ org.id }}" class="btn btn-primary w-100">
-                        <i class="bi bi-arrow-right me-1"></i>View Details
-                    </a>
-                </div>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-    {% else %}
-    <div class="card">
-        <div class="card-body text-center py-5">
-            <i class="bi bi-building display-1 text-muted mb-3"></i>
-            <h4>No Organizations Yet</h4>
-            <p class="text-muted mb-4">Add your first organization to start tracking marketing performance</p>
-            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addOrgModal">
+        <div class="quick-actions">
+            <button class="btn btn-outline-light btn-sm" onclick="loadDemoData()">
+                <i class="bi bi-magic me-1"></i>Load Demo Data
+            </button>
+            <button class="btn btn-outline-light btn-sm" onclick="refreshDashboard()">
+                <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+            </button>
+            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addOrgModal">
                 <i class="bi bi-plus-lg me-1"></i>Add Organization
             </button>
         </div>
     </div>
-    {% endif %}
+
+    <!-- Organization Selector -->
+    <div class="org-selector">
+        <div class="row align-items-center">
+            <div class="col-md-4">
+                <label class="form-label mb-0 text-muted">Select Organization</label>
+                <select id="orgSelector" class="form-select bg-dark text-light border-secondary mt-1">
+                    <option value="">-- Select Organization --</option>
+                    {% for org in organizations %}
+                    <option value="{{ org.id }}">{{ org.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label mb-0 text-muted">Time Period</label>
+                <select id="periodSelector" class="form-select bg-dark text-light border-secondary mt-1">
+                    <option value="7">Last 7 Days</option>
+                    <option value="30" selected>Last 30 Days</option>
+                    <option value="90">Last 90 Days</option>
+                </select>
+            </div>
+            <div class="col-md-4 text-end">
+                <div id="healthScore" class="d-inline-block text-center" style="display: none !important;">
+                    <div class="text-muted small">Health Score</div>
+                    <div class="metric-value" id="healthScoreValue">--</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Metrics Row -->
+    <div class="row g-4 mb-4" id="metricsRow">
+        <div class="col-md-3">
+            <div class="metric-card">
+                <div class="metric-label">Total Revenue</div>
+                <div class="metric-value" id="metricRevenue">$0</div>
+                <div class="metric-change positive" id="metricRevenueChange">--</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-card">
+                <div class="metric-label">Total Spend</div>
+                <div class="metric-value" id="metricSpend">$0</div>
+                <div class="metric-change" id="metricSpendChange">--</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-card">
+                <div class="metric-label">ROAS</div>
+                <div class="metric-value" id="metricROAS">0x</div>
+                <div class="metric-change" id="metricROASChange">--</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-card">
+                <div class="metric-label">Conversions</div>
+                <div class="metric-value" id="metricConversions">0</div>
+                <div class="metric-change positive" id="metricConversionsChange">--</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-8">
+            <div class="chart-container position-relative">
+                <h6 class="mb-3"><i class="bi bi-graph-up me-2"></i>Performance Trends</h6>
+                <canvas id="trendChart"></canvas>
+                <div class="loading-overlay" id="trendLoading" style="display: none;">
+                    <div class="spinner-border text-primary" role="status"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="chart-container position-relative">
+                <h6 class="mb-3"><i class="bi bi-pie-chart me-2"></i>Channel Mix</h6>
+                <canvas id="channelChart"></canvas>
+                <div class="loading-overlay" id="channelLoading" style="display: none;">
+                    <div class="spinner-border text-primary" role="status"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Second Charts Row -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-6">
+            <div class="chart-container position-relative">
+                <h6 class="mb-3"><i class="bi bi-bar-chart me-2"></i>Channel ROI Comparison</h6>
+                <canvas id="roiChart"></canvas>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="chart-container position-relative">
+                <h6 class="mb-3"><i class="bi bi-bullseye me-2"></i>Campaign Performance</h6>
+                <canvas id="campaignChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Organizations List -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="bi bi-building me-2"></i>Organizations</h5>
+            <span class="badge bg-dark">{{ organizations|length }} total</span>
+        </div>
+        <div class="card-body">
+            {% if organizations %}
+            <div class="table-responsive">
+                <table class="table table-dark table-hover">
+                    <thead>
+                        <tr>
+                            <th>Organization</th>
+                            <th>Industry</th>
+                            <th>Budget</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for org in organizations %}
+                        <tr>
+                            <td><strong>{{ org.name }}</strong></td>
+                            <td>{{ org.industry or 'Not specified' }}</td>
+                            <td>{% if org.annual_marketing_budget %}${{ "{:,.0f}".format(org.annual_marketing_budget) }}{% else %}--{% endif %}</td>
+                            <td>
+                                <a href="/organization/{{ org.id }}" class="btn btn-sm btn-outline-light"><i class="bi bi-eye"></i></a>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteOrg('{{ org.id }}')"><i class="bi bi-trash"></i></button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-building display-1 text-muted mb-3"></i>
+                <h4>No Organizations Yet</h4>
+                <p class="text-muted mb-4">Add an organization or load demo data to get started</p>
+                <button class="btn btn-primary me-2" onclick="loadDemoData()"><i class="bi bi-magic me-1"></i>Load Demo Data</button>
+                <button class="btn btn-outline-light" data-bs-toggle="modal" data-bs-target="#addOrgModal"><i class="bi bi-plus-lg me-1"></i>Add Organization</button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
 </div>
 
 <!-- Add Organization Modal -->
@@ -77,16 +222,6 @@
                             <option value="Retail">Retail</option>
                             <option value="Manufacturing">Manufacturing</option>
                             <option value="Professional Services">Professional Services</option>
-                            <option value="Other">Other</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Company Size</label>
-                        <select class="form-select bg-dark text-light border-secondary" name="size">
-                            <option value="">Select size...</option>
-                            <option value="SMB">SMB (1-100 employees)</option>
-                            <option value="Mid-Market">Mid-Market (100-1000 employees)</option>
-                            <option value="Enterprise">Enterprise (1000+ employees)</option>
                         </select>
                     </div>
                     <div class="mb-3">
@@ -106,30 +241,160 @@
 
 {% block extra_js %}
 <script>
+let trendChart, channelChart, roiChart, campaignChart;
+let currentData = null;
+
+const chartColors = {
+    pink: 'rgba(233, 30, 99, 0.8)',
+    purple: 'rgba(156, 39, 176, 0.8)',
+    blue: 'rgba(33, 150, 243, 0.8)',
+    green: 'rgba(76, 175, 80, 0.8)',
+    orange: 'rgba(255, 152, 0, 0.8)',
+    cyan: 'rgba(0, 188, 212, 0.8)',
+    red: 'rgba(244, 67, 54, 0.8)',
+    lime: 'rgba(205, 220, 57, 0.8)'
+};
+const colorArray = Object.values(chartColors);
+
+function initCharts() {
+    const chartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { labels: { color: '#e0e0e0' } } },
+        scales: {
+            x: { ticks: { color: '#888' }, grid: { color: 'rgba(255,255,255,0.1)' } },
+            y: { ticks: { color: '#888' }, grid: { color: 'rgba(255,255,255,0.1)' } }
+        }
+    };
+
+    trendChart = new Chart(document.getElementById('trendChart'), {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [
+                { label: 'Revenue', data: [], borderColor: chartColors.green, backgroundColor: 'rgba(76, 175, 80, 0.1)', fill: true, tension: 0.4 },
+                { label: 'Spend', data: [], borderColor: chartColors.pink, backgroundColor: 'rgba(233, 30, 99, 0.1)', fill: true, tension: 0.4 }
+            ]
+        },
+        options: chartOptions
+    });
+
+    channelChart = new Chart(document.getElementById('channelChart'), {
+        type: 'doughnut',
+        data: { labels: [], datasets: [{ data: [], backgroundColor: colorArray, borderWidth: 0 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#e0e0e0', padding: 15 } } }, cutout: '60%' }
+    });
+
+    roiChart = new Chart(document.getElementById('roiChart'), {
+        type: 'bar',
+        data: { labels: [], datasets: [{ label: 'ROI %', data: [], backgroundColor: colorArray }] },
+        options: { ...chartOptions, indexAxis: 'y', plugins: { legend: { display: false } } }
+    });
+
+    campaignChart = new Chart(document.getElementById('campaignChart'), {
+        type: 'bar',
+        data: { labels: [], datasets: [{ label: 'Budget', data: [], backgroundColor: chartColors.blue }, { label: 'Spent', data: [], backgroundColor: chartColors.pink }] },
+        options: chartOptions
+    });
+}
+
+function updateMetrics(data) {
+    const metrics = data.metrics_summary || {};
+    document.getElementById('metricRevenue').textContent = '$' + (metrics.total_revenue || 0).toLocaleString();
+    document.getElementById('metricSpend').textContent = '$' + (metrics.total_spend || 0).toLocaleString();
+    document.getElementById('metricROAS').textContent = (metrics.roas || 0).toFixed(2) + 'x';
+    document.getElementById('metricConversions').textContent = (metrics.total_conversions || 0).toLocaleString();
+    const roi = metrics.roi_percentage || 0;
+    document.getElementById('metricRevenueChange').textContent = roi >= 0 ? `+${roi.toFixed(1)}% ROI` : `${roi.toFixed(1)}% ROI`;
+    document.getElementById('metricRevenueChange').className = 'metric-change ' + (roi >= 0 ? 'positive' : 'negative');
+    if (metrics.health_score) {
+        document.getElementById('healthScore').style.display = 'inline-block';
+        document.getElementById('healthScoreValue').textContent = metrics.health_score;
+    }
+}
+
+function updateCharts(data) {
+    const channels = data.channels || [];
+    const campaigns = data.campaigns || [];
+    const trends = data.trends || [];
+
+    if (trends.length > 0) {
+        trendChart.data.labels = trends.map(t => t.date);
+        trendChart.data.datasets[0].data = trends.map(t => t.revenue);
+        trendChart.data.datasets[1].data = trends.map(t => t.spend);
+        trendChart.update();
+    }
+    if (channels.length > 0) {
+        channelChart.data.labels = channels.map(c => c.name);
+        channelChart.data.datasets[0].data = channels.map(c => c.spend);
+        channelChart.update();
+        roiChart.data.labels = channels.map(c => c.name);
+        roiChart.data.datasets[0].data = channels.map(c => c.roi);
+        roiChart.update();
+    }
+    if (campaigns.length > 0) {
+        const topCampaigns = campaigns.slice(0, 6);
+        campaignChart.data.labels = topCampaigns.map(c => c.name.substring(0, 15));
+        campaignChart.data.datasets[0].data = topCampaigns.map(c => c.budget);
+        campaignChart.data.datasets[1].data = topCampaigns.map(c => c.spent);
+        campaignChart.update();
+    }
+}
+
+async function loadDemoData() {
+    const btn = event.target.closest('button');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Loading...';
+    try {
+        const response = await fetch('/api/demo/load', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ organization_name: 'Demo Marketing Co' }) });
+        if (response.ok) {
+            const result = await response.json();
+            alert(`Demo data loaded! Created ${result.channels_created} channels and ${result.campaigns_created} campaigns.`);
+            window.location.reload();
+        } else { alert('Failed to load demo data'); }
+    } catch (error) { alert('Error: ' + error.message); }
+    finally { btn.disabled = false; btn.innerHTML = '<i class="bi bi-magic me-1"></i>Load Demo Data'; }
+}
+
+async function loadOrgData(orgId) {
+    if (!orgId) { currentData = null; return; }
+    document.getElementById('trendLoading').style.display = 'flex';
+    document.getElementById('channelLoading').style.display = 'flex';
+    try {
+        const response = await fetch('/api/demo/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ seed: orgId.charCodeAt(0) }) });
+        if (response.ok) { currentData = await response.json(); updateMetrics(currentData); updateCharts(currentData); }
+    } catch (error) { console.error('Error loading data:', error); }
+    finally { document.getElementById('trendLoading').style.display = 'none'; document.getElementById('channelLoading').style.display = 'none'; }
+}
+
+function refreshDashboard() {
+    const orgId = document.getElementById('orgSelector').value;
+    if (orgId) { loadOrgData(orgId); } else { window.location.reload(); }
+}
+
+async function deleteOrg(orgId) {
+    if (!confirm('Are you sure you want to delete this organization?')) return;
+    try { const response = await fetch(`/api/organizations/${orgId}`, { method: 'DELETE' }); if (response.ok) { window.location.reload(); } }
+    catch (error) { alert('Error deleting organization'); }
+}
+
 document.getElementById('addOrgForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
     const data = Object.fromEntries(formData.entries());
-
-    if (data.annual_marketing_budget) {
-        data.annual_marketing_budget = parseFloat(data.annual_marketing_budget);
-    }
-
+    if (data.annual_marketing_budget) data.annual_marketing_budget = parseFloat(data.annual_marketing_budget);
     try {
-        const response = await fetch('/api/organizations', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        });
+        const response = await fetch('/api/organizations', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+        if (response.ok) window.location.reload(); else alert('Error creating organization');
+    } catch (error) { alert('Error: ' + error.message); }
+});
 
-        if (response.ok) {
-            window.location.reload();
-        } else {
-            alert('Error creating organization');
-        }
-    } catch (error) {
-        alert('Error: ' + error.message);
-    }
+document.getElementById('orgSelector').addEventListener('change', (e) => { loadOrgData(e.target.value); });
+
+document.addEventListener('DOMContentLoaded', () => {
+    initCharts();
+    const selector = document.getElementById('orgSelector');
+    if (selector.options.length > 1) { selector.selectedIndex = 1; loadOrgData(selector.value); }
 });
 </script>
 {% endblock %}

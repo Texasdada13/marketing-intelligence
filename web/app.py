@@ -449,6 +449,66 @@ def create_app():
 
         return jsonify(uploaded_file.to_dict())
 
+    # ==================== DASHBOARD API ====================
+
+    @app.route('/api/dashboard/<org_id>')
+    def api_dashboard_data(org_id):
+        """Get dashboard data for an organization."""
+        org = OrganizationRepository.get_by_id(org_id)
+        if not org:
+            return jsonify({'error': 'Organization not found'}), 404
+
+        channels = ChannelRepository.get_by_organization(org_id)
+        campaigns = CampaignRepository.get_by_organization(org_id)
+        benchmark = BenchmarkResultRepository.get_latest(org_id)
+
+        # Calculate metrics
+        total_revenue = sum(c.revenue or 0 for c in channels)
+        total_spend = sum(c.spend or 0 for c in channels)
+        total_conversions = sum(c.conversions or 0 for c in channels)
+        roas = round(total_revenue / total_spend, 2) if total_spend > 0 else 0
+
+        # Channel data for charts
+        channel_data = [{
+            'name': c.name,
+            'spend': c.spend or 0,
+            'revenue': c.revenue or 0,
+            'conversions': c.conversions or 0,
+            'roi': round((c.revenue - c.spend) / c.spend * 100, 1) if c.spend and c.spend > 0 else 0
+        } for c in channels]
+
+        # Campaign data for charts
+        campaign_data = [{
+            'name': c.name,
+            'channel': c.channel,
+            'status': c.status,
+            'budget': c.budget or 0,
+            'spent': c.spent or 0,
+            'leads': c.leads or 0
+        } for c in campaigns]
+
+        # Trend data (mock for now - in production, query historical data)
+        import random
+        trend_data = {
+            'labels': ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6'],
+            'revenue': [int(total_revenue * (0.7 + random.random() * 0.1 * i)) for i in range(6)],
+            'spend': [int(total_spend * (0.8 + random.random() * 0.05 * i)) for i in range(6)]
+        }
+
+        return jsonify({
+            'organization': org.to_dict(),
+            'metrics': {
+                'total_revenue': total_revenue,
+                'total_spend': total_spend,
+                'roas': roas,
+                'total_conversions': total_conversions
+            },
+            'channels': channel_data,
+            'campaigns': campaign_data,
+            'trend_data': trend_data,
+            'benchmark': benchmark.to_dict() if benchmark else None
+        })
+
     # ==================== DEMO DATA API ====================
 
     @app.route('/api/demo/generate', methods=['POST'])
