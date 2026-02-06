@@ -14,6 +14,7 @@ from src.ai_core.file_analyzer import create_file_analyzer
 from src.patterns.benchmark_engine import create_marketing_benchmarks, create_digital_benchmarks
 from src.demo.data_generator import create_marketing_demo_generator
 from src.reports.report_generator import create_report_generator
+from src.alerts.alert_engine import create_alert_engine
 
 
 def create_app():
@@ -41,9 +42,10 @@ def create_app():
     marketing_benchmark = create_marketing_benchmarks()
     digital_benchmark = create_digital_benchmarks()
 
-    # Initialize file analyzer and report generator
+    # Initialize file analyzer, report generator, and alert engine
     file_analyzer = create_file_analyzer()
     report_generator = create_report_generator()
+    alert_engine = create_alert_engine()
 
     # ==================== PAGE ROUTES ====================
 
@@ -603,6 +605,55 @@ def create_app():
 
         html_content = report_generator.generate_html_report(data, org.name)
         return Response(html_content, mimetype='text/html')
+
+    # ==================== ALERTS API ====================
+
+    @app.route('/api/alerts/<org_id>')
+    def api_get_alerts(org_id):
+        """Get alerts for an organization based on current metrics."""
+        org = OrganizationRepository.get_by_id(org_id)
+        if not org:
+            return jsonify({'error': 'Organization not found'}), 404
+
+        channels = ChannelRepository.get_by_organization(org_id)
+        campaigns = CampaignRepository.get_by_organization(org_id)
+
+        total_revenue = sum(c.revenue or 0 for c in channels)
+        total_spend = sum(c.spend or 0 for c in channels)
+        total_conversions = sum(c.conversions or 0 for c in channels)
+        roas = round(total_revenue / total_spend, 2) if total_spend > 0 else 0
+
+        data = {
+            'metrics': {
+                'total_revenue': total_revenue,
+                'total_spend': total_spend,
+                'roas': roas,
+                'total_conversions': total_conversions
+            },
+            'channels': [{
+                'name': c.name,
+                'spend': c.spend or 0,
+                'revenue': c.revenue or 0,
+                'conversions': c.conversions or 0,
+                'roi': round((c.revenue - c.spend) / c.spend * 100, 1) if c.spend and c.spend > 0 else 0
+            } for c in channels],
+            'campaigns': [{
+                'name': c.name,
+                'channel': c.channel,
+                'status': c.status,
+                'budget': c.budget or 0,
+                'spent': c.spent or 0,
+                'leads': c.leads or 0
+            } for c in campaigns]
+        }
+
+        alerts = alert_engine.check_metrics(data)
+        summary = alert_engine.get_alert_summary(alerts)
+
+        return jsonify({
+            'alerts': [a.to_dict() for a in alerts],
+            'summary': summary
+        })
 
     # ==================== DEMO DATA API ====================
 
