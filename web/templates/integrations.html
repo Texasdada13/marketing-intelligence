@@ -1,0 +1,542 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics Integrations{% endblock %}
+
+{% block extra_css %}
+<style>
+    .integration-card {
+        border: 2px solid rgba(233, 30, 99, 0.2);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+        background: var(--card-bg);
+    }
+    .integration-card:hover {
+        border-color: var(--accent-color);
+        box-shadow: 0 4px 15px rgba(233, 30, 99, 0.2);
+    }
+    .integration-card.connected {
+        border-color: #4caf50;
+        background: linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, rgba(76, 175, 80, 0.05) 100%);
+    }
+    .integration-card.demo {
+        border-color: var(--accent-color);
+        background: linear-gradient(135deg, rgba(233, 30, 99, 0.1) 0%, rgba(156, 39, 176, 0.05) 100%);
+    }
+    .integration-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        margin-bottom: 1rem;
+    }
+    .ga-icon { background: linear-gradient(135deg, #f9ab00 0%, #e37400 100%); color: white; }
+    .demo-icon { background: var(--primary-gradient); color: white; }
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    .status-connected { background: rgba(76, 175, 80, 0.2); color: #4caf50; }
+    .status-not-connected { background: rgba(255, 255, 255, 0.1); color: #888; }
+    .status-demo { background: rgba(233, 30, 99, 0.2); color: var(--accent-color); }
+    .metric-card {
+        background: var(--card-bg);
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+    }
+    .metric-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        background: var(--primary-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    .metric-label {
+        color: #888;
+        font-size: 0.9rem;
+    }
+    .chart-container {
+        position: relative;
+        height: 300px;
+    }
+    .data-table {
+        font-size: 0.9rem;
+    }
+    .data-table th {
+        border-bottom: 2px solid var(--accent-color);
+        color: #888;
+        font-weight: 600;
+    }
+    .tab-content { padding-top: 1.5rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1"><i class="bi bi-plug text-primary me-2"></i>Analytics Integrations</h2>
+            <p class="text-muted mb-0">Connect to Google Analytics for real-time marketing data</p>
+        </div>
+        <div>
+            <button class="btn btn-outline-light" onclick="refreshData()">
+                <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+            </button>
+        </div>
+    </div>
+
+    <!-- Integration Cards -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="integration-card" id="ga-card">
+                <div class="integration-icon ga-icon">
+                    <i class="bi bi-bar-chart-line"></i>
+                </div>
+                <h5>Google Analytics 4</h5>
+                <p class="text-muted small mb-3">Website traffic, user behavior, acquisition channels</p>
+                <span class="status-badge status-not-connected" id="ga-status">Not Connected</span>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="integration-card" id="demo-card">
+                <div class="integration-icon demo-icon">
+                    <i class="bi bi-play-circle"></i>
+                </div>
+                <h5>Demo Mode</h5>
+                <p class="text-muted small mb-3">Try with realistic sample marketing data</p>
+                <button class="btn btn-primary btn-sm" id="demo-btn" onclick="enableDemoMode()">
+                    <i class="bi bi-play me-1"></i>Enable Demo
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Section (shown when connected) -->
+    <div id="data-section" style="display: none;">
+        <!-- Key Metrics -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="metric-card">
+                    <div class="metric-value" id="total-users">-</div>
+                    <div class="metric-label">Total Users</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-card">
+                    <div class="metric-value" id="sessions">-</div>
+                    <div class="metric-label">Sessions</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-card">
+                    <div class="metric-value" id="pageviews">-</div>
+                    <div class="metric-label">Pageviews</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-card">
+                    <div class="metric-value" id="bounce-rate">-</div>
+                    <div class="metric-label">Bounce Rate</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <ul class="nav nav-tabs" role="tablist">
+            <li class="nav-item">
+                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#traffic-tab">
+                    <i class="bi bi-graph-up me-1"></i>Traffic Trend
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#acquisition-tab">
+                    <i class="bi bi-funnel me-1"></i>Acquisition
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#pages-tab">
+                    <i class="bi bi-file-earmark me-1"></i>Top Pages
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#devices-tab">
+                    <i class="bi bi-phone me-1"></i>Devices
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content">
+            <!-- Traffic Trend Tab -->
+            <div class="tab-pane fade show active" id="traffic-tab">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="traffic-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Acquisition Tab -->
+            <div class="tab-pane fade" id="acquisition-tab">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h6 class="mb-0">By Source</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container" style="height: 250px;">
+                                    <canvas id="source-chart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h6 class="mb-0">By Medium</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container" style="height: 250px;">
+                                    <canvas id="medium-chart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Pages Tab -->
+            <div class="tab-pane fade" id="pages-tab">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table data-table" id="pages-table">
+                                <thead>
+                                    <tr>
+                                        <th>Page Path</th>
+                                        <th>Pageviews</th>
+                                        <th>Unique Views</th>
+                                        <th>Avg. Time</th>
+                                        <th>Bounce Rate</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Devices Tab -->
+            <div class="tab-pane fade" id="devices-tab">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="chart-container" style="height: 250px;">
+                                    <canvas id="device-chart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body" id="device-details">
+                                <!-- Device details will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Not Connected Message -->
+    <div id="not-connected-section" class="text-center py-5">
+        <i class="bi bi-plug display-1 text-muted"></i>
+        <h4 class="mt-3">No Integrations Connected</h4>
+        <p class="text-muted">Connect to Google Analytics or enable Demo Mode to explore the features.</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let charts = {};
+
+async function checkStatus() {
+    try {
+        const res = await fetch('/api/integrations/status');
+        const status = await res.json();
+        updateIntegrationCards(status);
+
+        if (status.google_analytics.connected || status.demo_mode) {
+            document.getElementById('data-section').style.display = 'block';
+            document.getElementById('not-connected-section').style.display = 'none';
+            await loadAllData();
+        }
+    } catch (e) {
+        console.error('Error checking status:', e);
+    }
+}
+
+function updateIntegrationCards(status) {
+    // Google Analytics
+    const gaCard = document.getElementById('ga-card');
+    const gaStatus = document.getElementById('ga-status');
+    if (status.google_analytics.connected) {
+        gaCard.classList.add('connected');
+        gaStatus.className = 'status-badge status-connected';
+        gaStatus.textContent = 'Connected';
+    }
+
+    // Demo card
+    const demoCard = document.getElementById('demo-card');
+    const demoBtn = document.getElementById('demo-btn');
+    if (status.demo_mode) {
+        demoCard.classList.add('demo');
+        demoBtn.innerHTML = '<i class="bi bi-check me-1"></i>Demo Active';
+        demoBtn.disabled = true;
+    }
+}
+
+async function enableDemoMode() {
+    try {
+        const btn = document.getElementById('demo-btn');
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Loading...';
+        btn.disabled = true;
+
+        await fetch('/api/integrations/demo/enable', { method: 'POST' });
+        await checkStatus();
+    } catch (e) {
+        console.error('Error enabling demo mode:', e);
+        alert('Failed to enable demo mode');
+    }
+}
+
+async function loadAllData() {
+    await Promise.all([
+        loadTrafficSummary(),
+        loadTrafficTrend(),
+        loadAcquisitionData(),
+        loadTopPages(),
+        loadDeviceData()
+    ]);
+}
+
+async function loadTrafficSummary() {
+    try {
+        const res = await fetch('/api/integrations/traffic-summary');
+        const data = await res.json();
+
+        if (data.error) return;
+
+        document.getElementById('total-users').textContent = formatNumber(data.total_users);
+        document.getElementById('sessions').textContent = formatNumber(data.sessions);
+        document.getElementById('pageviews').textContent = formatNumber(data.pageviews);
+        document.getElementById('bounce-rate').textContent = (data.bounce_rate || 0).toFixed(1) + '%';
+    } catch (e) {
+        console.error('Error loading traffic summary:', e);
+    }
+}
+
+async function loadTrafficTrend() {
+    try {
+        const res = await fetch('/api/integrations/traffic-trend');
+        const data = await res.json();
+
+        if (data.error || !Array.isArray(data)) return;
+
+        if (charts.traffic) charts.traffic.destroy();
+        const ctx = document.getElementById('traffic-chart').getContext('2d');
+        charts.traffic = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: data.map(d => d.date),
+                datasets: [{
+                    label: 'Users',
+                    data: data.map(d => d.users || d.total_users),
+                    borderColor: '#e91e63',
+                    backgroundColor: 'rgba(233, 30, 99, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }, {
+                    label: 'Sessions',
+                    data: data.map(d => d.sessions),
+                    borderColor: '#9c27b0',
+                    backgroundColor: 'rgba(156, 39, 176, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'top' } },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' } },
+                    x: { grid: { color: 'rgba(255,255,255,0.1)' } }
+                }
+            }
+        });
+    } catch (e) {
+        console.error('Error loading traffic trend:', e);
+    }
+}
+
+async function loadAcquisitionData() {
+    try {
+        const res = await fetch('/api/integrations/acquisition');
+        const data = await res.json();
+
+        if (data.error) return;
+
+        // Source chart
+        if (charts.source) charts.source.destroy();
+        const sourceCtx = document.getElementById('source-chart').getContext('2d');
+        const sourceLabels = Object.keys(data.by_source || {});
+        const sourceValues = Object.values(data.by_source || {});
+        charts.source = new Chart(sourceCtx, {
+            type: 'doughnut',
+            data: {
+                labels: sourceLabels,
+                datasets: [{
+                    data: sourceValues,
+                    backgroundColor: ['#e91e63', '#9c27b0', '#673ab7', '#3f51b5', '#2196f3', '#00bcd4']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'right' } }
+            }
+        });
+
+        // Medium chart
+        if (charts.medium) charts.medium.destroy();
+        const mediumCtx = document.getElementById('medium-chart').getContext('2d');
+        const mediumLabels = Object.keys(data.by_medium || {});
+        const mediumValues = Object.values(data.by_medium || {});
+        charts.medium = new Chart(mediumCtx, {
+            type: 'bar',
+            data: {
+                labels: mediumLabels,
+                datasets: [{
+                    label: 'Sessions',
+                    data: mediumValues,
+                    backgroundColor: '#e91e63'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' } },
+                    x: { grid: { color: 'rgba(255,255,255,0.1)' } }
+                }
+            }
+        });
+    } catch (e) {
+        console.error('Error loading acquisition data:', e);
+    }
+}
+
+async function loadTopPages() {
+    try {
+        const res = await fetch('/api/integrations/top-pages?limit=15');
+        const data = await res.json();
+
+        if (data.error || !Array.isArray(data)) return;
+
+        const tbody = document.querySelector('#pages-table tbody');
+        tbody.innerHTML = data.map(page => `
+            <tr>
+                <td>${page.page_path || page.path || '-'}</td>
+                <td>${formatNumber(page.pageviews || page.views || 0)}</td>
+                <td>${formatNumber(page.unique_pageviews || page.unique_views || 0)}</td>
+                <td>${formatDuration(page.avg_time_on_page || page.avg_time || 0)}</td>
+                <td>${(page.bounce_rate || 0).toFixed(1)}%</td>
+            </tr>
+        `).join('');
+    } catch (e) {
+        console.error('Error loading top pages:', e);
+    }
+}
+
+async function loadDeviceData() {
+    try {
+        const res = await fetch('/api/integrations/devices');
+        const data = await res.json();
+
+        if (data.error || !Array.isArray(data)) return;
+
+        // Device chart
+        if (charts.device) charts.device.destroy();
+        const ctx = document.getElementById('device-chart').getContext('2d');
+        charts.device = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: data.map(d => d.device_category || d.device || 'Unknown'),
+                datasets: [{
+                    data: data.map(d => d.sessions || d.users || 0),
+                    backgroundColor: ['#e91e63', '#9c27b0', '#673ab7', '#3f51b5']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'right' } }
+            }
+        });
+
+        // Device details
+        const details = document.getElementById('device-details');
+        const total = data.reduce((sum, d) => sum + (d.sessions || d.users || 0), 0);
+        details.innerHTML = `
+            <h6 class="mb-3">Device Breakdown</h6>
+            ${data.map(d => {
+                const value = d.sessions || d.users || 0;
+                const pct = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                return `
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>${d.device_category || d.device || 'Unknown'}</span>
+                        <span class="badge bg-primary">${formatNumber(value)} (${pct}%)</span>
+                    </div>
+                `;
+            }).join('')}
+        `;
+    } catch (e) {
+        console.error('Error loading device data:', e);
+    }
+}
+
+function formatNumber(num) {
+    if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+    if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+    return num.toString();
+}
+
+function formatDuration(seconds) {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+async function refreshData() {
+    await loadAllData();
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', checkStatus);
+</script>
+{% endblock %}

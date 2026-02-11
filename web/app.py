@@ -15,6 +15,7 @@ from src.patterns.benchmark_engine import create_marketing_benchmarks, create_di
 from src.demo.data_generator import create_marketing_demo_generator
 from src.reports.report_generator import create_report_generator
 from src.alerts.alert_engine import create_alert_engine
+from src.integrations import MarketingIntegrationManager, IntegrationType
 
 
 def create_app():
@@ -93,6 +94,88 @@ def create_app():
             (ConversationMode.MARKETING_PLANNING, "Strategic planning"),
         ]}
         return render_template('chat.html', modes=modes)
+
+    # Integration manager singleton
+    integration_manager = MarketingIntegrationManager()
+
+    @app.route('/integrations')
+    def integrations_page():
+        """Marketing integrations page."""
+        return render_template('integrations.html')
+
+    # ==================== INTEGRATION API ROUTES ====================
+
+    @app.route('/api/integrations/status')
+    def api_integration_status():
+        """Get integration connection status."""
+        ga_status = integration_manager.get_status(IntegrationType.GOOGLE_ANALYTICS)
+        demo_status = integration_manager.get_status(IntegrationType.DEMO)
+        return jsonify({
+            'google_analytics': {
+                'connected': ga_status.is_connected,
+                'property_id': ga_status.property_id
+            },
+            'demo_mode': demo_status.is_connected
+        })
+
+    @app.route('/api/integrations/demo/enable', methods=['POST'])
+    def api_enable_demo_mode():
+        """Enable demo mode for integrations."""
+        integration_manager.enable_demo_mode()
+        return jsonify({'success': True, 'message': 'Demo mode enabled'})
+
+    @app.route('/api/integrations/traffic-summary')
+    def api_traffic_summary():
+        """Get traffic summary from Google Analytics."""
+        days = request.args.get('days', 30, type=int)
+        summary = integration_manager.get_traffic_summary(days=days)
+        if not summary:
+            return jsonify({'error': 'No data available'}), 400
+        return jsonify(summary)
+
+    @app.route('/api/integrations/acquisition')
+    def api_acquisition_data():
+        """Get acquisition breakdown from Google Analytics."""
+        days = request.args.get('days', 30, type=int)
+        data = integration_manager.get_acquisition_data(days=days)
+        if not data:
+            return jsonify({'error': 'No data available'}), 400
+        return jsonify(data)
+
+    @app.route('/api/integrations/top-pages')
+    def api_top_pages():
+        """Get top pages from Google Analytics."""
+        days = request.args.get('days', 30, type=int)
+        limit = request.args.get('limit', 20, type=int)
+        pages = integration_manager.get_top_pages(days=days, limit=limit)
+        if not pages:
+            return jsonify({'error': 'No data available'}), 400
+        return jsonify(pages)
+
+    @app.route('/api/integrations/traffic-trend')
+    def api_traffic_trend():
+        """Get daily traffic trend."""
+        days = request.args.get('days', 30, type=int)
+        trend = integration_manager.get_traffic_by_date(days=days)
+        if not trend:
+            return jsonify({'error': 'No data available'}), 400
+        return jsonify(trend)
+
+    @app.route('/api/integrations/devices')
+    def api_device_breakdown():
+        """Get traffic by device category."""
+        days = request.args.get('days', 30, type=int)
+        devices = integration_manager.get_device_breakdown(days=days)
+        if not devices:
+            return jsonify({'error': 'No data available'}), 400
+        return jsonify(devices)
+
+    @app.route('/api/integrations/marketing-summary')
+    def api_marketing_summary():
+        """Get comprehensive marketing analytics summary."""
+        days = request.args.get('days', 30, type=int)
+        summary = integration_manager.get_marketing_summary(days=days)
+        return jsonify(summary)
 
     # ==================== API ROUTES ====================
 
