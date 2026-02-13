@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block title %}Funnel Analytics - Marketing Intelligence{% endblock %}
+{% block extra_css %}
+<style>
+    .funnel-stage { padding: 16px; border-radius: 10px; margin-bottom: 6px; position: relative; transition: transform 0.15s; }
+    .funnel-stage:hover { transform: translateX(4px); }
+    .leak-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; background: rgba(244,67,54,0.15); color: #f44336; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-start mb-4">
+        <div>
+            <h2 class="text-white"><i class="bi bi-funnel me-2" style="color:var(--accent-color);"></i>Funnel Analytics</h2>
+            <p style="color:#8b949e;">Identify funnel leaks, optimize conversion rates, and improve customer journey</p>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-2"><div class="stat-card text-center"><div class="stat-value">45.2K</div><small style="color:#8b949e;">Visitors</small></div></div>
+        <div class="col-md-2"><div class="stat-card text-center"><div class="stat-value" style="color:#e91e63;">8.4K</div><small style="color:#8b949e;">Leads</small></div></div>
+        <div class="col-md-2"><div class="stat-card text-center"><div class="stat-value" style="color:#9c27b0;">2.1K</div><small style="color:#8b949e;">MQLs</small></div></div>
+        <div class="col-md-2"><div class="stat-card text-center"><div class="stat-value" style="color:#1e88e5;">680</div><small style="color:#8b949e;">SQLs</small></div></div>
+        <div class="col-md-2"><div class="stat-card text-center"><div class="stat-value" style="color:#4caf50;">285</div><small style="color:#8b949e;">Customers</small></div></div>
+        <div class="col-md-2"><div class="stat-card text-center"><div class="stat-value" style="color:#4caf50;">0.63%</div><small style="color:#8b949e;">Overall Conv</small></div></div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="card mb-4">
+                <div class="card-header"><h5 class="mb-0 text-white">Conversion Funnel</h5></div>
+                <div class="card-body" id="funnelViz"></div>
+            </div>
+            <div class="card mb-4">
+                <div class="card-header"><h5 class="mb-0 text-white">Stage Conversion Trend</h5></div>
+                <div class="card-body"><canvas id="convTrendChart" height="260"></canvas></div>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="card mb-4">
+                <div class="card-header"><h5 class="mb-0 text-white">Drop-off Analysis</h5></div>
+                <div class="card-body"><canvas id="dropoffChart" height="260"></canvas></div>
+            </div>
+            <div class="card mb-4">
+                <div class="card-header"><h5 class="mb-0 text-white">Funnel by Source</h5></div>
+                <div class="card-body"><canvas id="sourceChart" height="220"></canvas></div>
+            </div>
+            <div class="card">
+                <div class="card-header"><h5 class="mb-0 text-white"><i class="bi bi-lightning me-2"></i>Optimization Actions</h5></div>
+                <div class="card-body" id="funnelActions"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+const STAGES = [
+    {name:'Website Visitors',count:45200,convRate:null,dropoff:null,color:'#e91e63',width:100},
+    {name:'Engaged Visitors',count:18080,convRate:40.0,dropoff:60.0,color:'#c2185b',width:85},
+    {name:'Leads Captured',count:8436,convRate:18.7,dropoff:46.6,color:'#9c27b0',width:68},
+    {name:'Marketing Qualified (MQL)',count:2110,convRate:25.0,dropoff:75.0,color:'#7b1fa2',width:50},
+    {name:'Sales Qualified (SQL)',count:680,convRate:32.2,dropoff:67.8,color:'#1e88e5',width:35},
+    {name:'Opportunity',count:408,convRate:60.0,dropoff:40.0,color:'#1565c0',width:25},
+    {name:'Customer',count:285,convRate:69.9,dropoff:30.1,color:'#4caf50',width:18}
+];
+
+// Funnel visualization
+document.getElementById('funnelViz').innerHTML = STAGES.map((s,i) => {
+    const prevCount = i > 0 ? STAGES[i-1].count : null;
+    const leakCount = prevCount ? prevCount - s.count : 0;
+    return `<div class="funnel-stage" style="background:${s.color}20;border-left:4px solid ${s.color};width:${s.width}%;margin-left:auto;margin-right:auto;">
+        <div class="d-flex justify-content-between align-items-center">
+            <div><strong style="color:#e6edf3;">${s.name}</strong><br><span style="color:${s.color};font-size:1.3rem;font-weight:700;">${s.count.toLocaleString()}</span></div>
+            <div class="text-end">
+                ${s.convRate ? `<span style="color:#8b949e;">Conv: <strong style="color:#4caf50;">${s.convRate}%</strong></span>` : '<span style="color:#8b949e;">Top of Funnel</span>'}
+                ${leakCount > 0 ? `<br><span class="leak-badge">-${leakCount.toLocaleString()} lost</span>` : ''}
+            </div>
+        </div>
+    </div>`;
+}).join('');
+
+// Conversion trend
+new Chart(document.getElementById('convTrendChart'), {
+    type: 'line',
+    data: {
+        labels: ['Sep','Oct','Nov','Dec','Jan','Feb'],
+        datasets: [
+            {label:'Visitor→Lead',data:[17.5,18.0,18.2,18.5,18.6,18.7],borderColor:'#e91e63',tension:0.3},
+            {label:'Lead→MQL',data:[22.0,23.0,24.0,24.5,24.8,25.0],borderColor:'#9c27b0',tension:0.3},
+            {label:'MQL→SQL',data:[28.0,29.5,30.0,31.0,31.8,32.2],borderColor:'#1e88e5',tension:0.3},
+            {label:'SQL→Customer',data:[38.0,39.0,40.0,41.0,41.5,41.9],borderColor:'#4caf50',tension:0.3}
+        ]
+    },
+    options: {responsive:true, scales:{y:{ticks:{color:'#8b949e',callback:v=>v+'%'},grid:{color:'rgba(255,255,255,0.1)'}},x:{ticks:{color:'#8b949e'},grid:{color:'rgba(255,255,255,0.05)'}}}, plugins:{legend:{position:'bottom',labels:{color:'#8b949e'}}}}
+});
+
+// Drop-off chart
+new Chart(document.getElementById('dropoffChart'), {
+    type: 'bar',
+    data: {
+        labels: ['Visitor→Engaged','Engaged→Lead','Lead→MQL','MQL→SQL','SQL→Opp','Opp→Customer'],
+        datasets: [
+            {label:'Converted',data:[40,46.6,25.0,32.2,60.0,69.9],backgroundColor:'rgba(76,175,80,0.7)'},
+            {label:'Dropped',data:[60,53.4,75.0,67.8,40.0,30.1],backgroundColor:'rgba(244,67,54,0.5)'}
+        ]
+    },
+    options: {responsive:true, indexAxis:'y', scales:{x:{stacked:true,ticks:{color:'#8b949e',callback:v=>v+'%'},grid:{color:'rgba(255,255,255,0.05)'}},y:{stacked:true,ticks:{color:'#8b949e',font:{size:10}},grid:{color:'rgba(255,255,255,0.1)'}}}, plugins:{legend:{position:'bottom',labels:{color:'#8b949e'}}}}
+});
+
+// Funnel by source
+new Chart(document.getElementById('sourceChart'), {
+    type: 'bar',
+    data: {
+        labels: ['Organic','Paid Search','Social','Email','Referral'],
+        datasets: [
+            {label:'Leads',data:[2800,2100,1500,1200,836],backgroundColor:'#e91e63'},
+            {label:'Customers',data:[95,72,48,52,18],backgroundColor:'#4caf50'}
+        ]
+    },
+    options: {responsive:true, scales:{y:{ticks:{color:'#8b949e'},grid:{color:'rgba(255,255,255,0.1)'}},x:{ticks:{color:'#8b949e'},grid:{color:'rgba(255,255,255,0.05)'}}}, plugins:{legend:{position:'bottom',labels:{color:'#8b949e'}}}}
+});
+
+// Actions
+const ACTIONS = [
+    {action:'Add exit-intent popup on pricing page',stage:'Lead→MQL',impact:'+15% MQL conversion',priority:'High'},
+    {action:'Implement lead scoring to improve MQL quality',stage:'MQL→SQL',impact:'+8% SQL conversion',priority:'High'},
+    {action:'Create retargeting campaign for cart abandoners',stage:'Opp→Customer',impact:'+12% close rate',priority:'Medium'},
+    {action:'Optimize landing page load speed (currently 4.2s)',stage:'Visitor→Lead',impact:'+22% engagement',priority:'High'},
+    {action:'Add chatbot for real-time lead qualification',stage:'Lead→MQL',impact:'+10% MQL conversion',priority:'Medium'}
+];
+
+document.getElementById('funnelActions').innerHTML = ACTIONS.map(a => {
+    const color = a.priority==='High'?'#e91e63':'#ff9800';
+    return `<div class="d-flex align-items-start gap-2 mb-3"><span class="badge" style="background:${color};min-width:45px;font-size:0.7rem;">${a.priority}</span><div><span style="color:#e6edf3;font-size:0.9rem;">${a.action}</span><br><small style="color:#8b949e;">${a.stage}</small> <small style="color:#4caf50;">${a.impact}</small></div></div>`;
+}).join('');
+</script>
+{% endblock %}

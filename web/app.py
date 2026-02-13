@@ -80,6 +80,36 @@ def create_app():
                                content=content,
                                benchmark=benchmark)
 
+    @app.route('/campaign-analysis')
+    def campaign_analysis():
+        """Campaign analysis page."""
+        return render_template('campaign_analysis.html')
+
+    @app.route('/channel-optimization')
+    def channel_optimization():
+        """Channel optimization page."""
+        return render_template('channel_optimization.html')
+
+    @app.route('/funnel-analytics')
+    def funnel_analytics():
+        """Funnel analytics page."""
+        return render_template('funnel_analytics.html')
+
+    @app.route('/content-strategy')
+    def content_strategy():
+        """Content strategy page."""
+        return render_template('content_strategy.html')
+
+    @app.route('/roi-analysis')
+    def roi_analysis():
+        """ROI analysis page."""
+        return render_template('roi_analysis.html')
+
+    @app.route('/industry-benchmarks')
+    def industry_benchmarks():
+        """Industry benchmarks page."""
+        return render_template('industry_benchmarks.html')
+
     @app.route('/chat')
     def chat_page():
         """AI CMO Consultant chat interface."""

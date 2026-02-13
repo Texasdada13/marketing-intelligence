@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% block title %}Industry Benchmarks - Marketing Intelligence{% endblock %}
+{% block extra_css %}
+<style>
+    .bench-row { padding: 12px 16px; border-radius: 8px; background: rgba(255,255,255,0.03); margin-bottom: 6px; }
+    .bench-bar { height: 8px; border-radius: 4px; background: rgba(255,255,255,0.1); overflow: hidden; position: relative; }
+    .bench-fill { height: 100%; border-radius: 4px; }
+    .bench-marker { position: absolute; top: -3px; width: 2px; height: 14px; background: #fff; opacity: 0.6; }
+    .status-above { color: #4caf50; }
+    .status-near { color: #ff9800; }
+    .status-below { color: #f44336; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-start mb-4">
+        <div>
+            <h2 class="text-white"><i class="bi bi-bar-chart me-2" style="color:var(--accent-color);"></i>Industry Benchmarks</h2>
+            <p style="color:#8b949e;">Compare your marketing KPIs against industry standards with improvement plans</p>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-3"><div class="stat-card text-center"><div class="stat-value" style="color:#4caf50;">78</div><small style="color:#8b949e;">Benchmark Score (100)</small></div></div>
+        <div class="col-md-3"><div class="stat-card text-center"><div class="stat-value" style="color:#4caf50;">8</div><small style="color:#8b949e;">Above Benchmark</small></div></div>
+        <div class="col-md-3"><div class="stat-card text-center"><div class="stat-value" style="color:#ff9800;">4</div><small style="color:#8b949e;">Near Benchmark</small></div></div>
+        <div class="col-md-3"><div class="stat-card text-center"><div class="stat-value" style="color:#f44336;">3</div><small style="color:#8b949e;">Below Benchmark</small></div></div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="card mb-4">
+                <div class="card-header"><h5 class="mb-0 text-white">Your Performance vs Industry</h5></div>
+                <div class="card-body"><canvas id="radarChart" height="320"></canvas></div>
+            </div>
+            <div class="card">
+                <div class="card-header"><h5 class="mb-0 text-white">Detailed KPI Comparison</h5></div>
+                <div class="card-body" id="kpiTable"></div>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="card mb-4">
+                <div class="card-header"><h5 class="mb-0 text-white">Category Scores</h5></div>
+                <div class="card-body"><canvas id="categoryChart" height="220"></canvas></div>
+            </div>
+            <div class="card mb-4">
+                <div class="card-header"><h5 class="mb-0 text-white">Score Trend</h5></div>
+                <div class="card-body"><canvas id="trendChart" height="200"></canvas></div>
+            </div>
+            <div class="card">
+                <div class="card-header"><h5 class="mb-0 text-white"><i class="bi bi-trophy me-2"></i>Improvement Priorities</h5></div>
+                <div class="card-body" id="priorities"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+const KPIS = [
+    {kpi:'Website Conversion Rate',yours:'3.8%',benchmark:'2.5%',pct:152,status:'above',category:'Conversion'},
+    {kpi:'Email Open Rate',yours:'28.5%',benchmark:'22.0%',pct:130,status:'above',category:'Email'},
+    {kpi:'Email Click Rate',yours:'4.2%',benchmark:'3.5%',pct:120,status:'above',category:'Email'},
+    {kpi:'Social Engagement Rate',yours:'3.1%',benchmark:'2.8%',pct:111,status:'near',category:'Social'},
+    {kpi:'Paid Search ROAS',yours:'4.3x',benchmark:'3.5x',pct:123,status:'above',category:'Paid'},
+    {kpi:'Cost per Lead',yours:'$8.06',benchmark:'$12.50',pct:155,status:'above',category:'Efficiency'},
+    {kpi:'Marketing ROI',yours:'318%',benchmark:'250%',pct:127,status:'above',category:'ROI'},
+    {kpi:'Customer Acquisition Cost',yours:'$42',benchmark:'$65',pct:155,status:'above',category:'Efficiency'},
+    {kpi:'Social Media ROAS',yours:'2.3x',benchmark:'2.5x',pct:92,status:'near',category:'Social'},
+    {kpi:'Content Engagement Rate',yours:'4.2%',benchmark:'5.0%',pct:84,status:'near',category:'Content'},
+    {kpi:'Landing Page Conv Rate',yours:'8.5%',benchmark:'9.5%',pct:89,status:'near',category:'Conversion'},
+    {kpi:'Organic Traffic Growth',yours:'8%',benchmark:'15%',pct:53,status:'below',category:'SEO'},
+    {kpi:'Bounce Rate',yours:'52%',benchmark:'40%',pct:65,status:'below',category:'UX'},
+    {kpi:'Page Load Speed',yours:'4.2s',benchmark:'2.5s',pct:60,status:'below',category:'UX'},
+    {kpi:'CLV:CAC Ratio',yours:'67.6x',benchmark:'3x',pct:500,status:'above',category:'ROI'}
+];
+
+// Radar chart
+new Chart(document.getElementById('radarChart'), {
+    type: 'radar',
+    data: {
+        labels: ['Conversion','Email','Social','Paid','Efficiency','ROI','Content','SEO','UX'],
+        datasets: [
+            {label:'Your Performance',data:[90,85,72,82,92,95,68,45,55],backgroundColor:'rgba(233,30,99,0.2)',borderColor:'#e91e63',pointBackgroundColor:'#e91e63'},
+            {label:'Industry Benchmark',data:[70,70,70,70,70,70,70,70,70],backgroundColor:'rgba(156,39,176,0.1)',borderColor:'#9c27b0',borderDash:[5,5],pointBackgroundColor:'#9c27b0'}
+        ]
+    },
+    options: {responsive:true, scales:{r:{beginAtZero:true,max:100,grid:{color:'rgba(255,255,255,0.1)'},pointLabels:{color:'#8b949e',font:{size:11}},ticks:{display:false}}}, plugins:{legend:{position:'bottom',labels:{color:'#8b949e'}}}}
+});
+
+// Category scores
+new Chart(document.getElementById('categoryChart'), {
+    type: 'bar',
+    data: {
+        labels: ['Conversion','Email','Paid','Efficiency','ROI','Social','Content','SEO','UX'],
+        datasets: [{
+            label:'Score',
+            data:[90,85,82,92,95,72,68,45,55],
+            backgroundColor: function(ctx) {
+                const v = ctx.raw;
+                return v >= 80 ? '#4caf50' : v >= 60 ? '#ff9800' : '#f44336';
+            }
+        }]
+    },
+    options: {responsive:true, indexAxis:'y', scales:{x:{min:0,max:100,ticks:{color:'#8b949e'},grid:{color:'rgba(255,255,255,0.05)'}},y:{ticks:{color:'#8b949e'},grid:{color:'rgba(255,255,255,0.1)'}}}, plugins:{legend:{display:false}}}
+});
+
+// Score trend
+new Chart(document.getElementById('trendChart'), {
+    type: 'line',
+    data: {
+        labels: ['Sep','Oct','Nov','Dec','Jan','Feb'],
+        datasets: [{
+            label:'Benchmark Score',
+            data:[68,70,72,74,76,78],
+            borderColor:'#e91e63',backgroundColor:'rgba(233,30,99,0.1)',fill:true,tension:0.3
+        }]
+    },
+    options: {responsive:true, scales:{y:{min:50,max:100,ticks:{color:'#8b949e'},grid:{color:'rgba(255,255,255,0.1)'}},x:{ticks:{color:'#8b949e'},grid:{color:'rgba(255,255,255,0.05)'}}}, plugins:{legend:{labels:{color:'#8b949e'}}}}
+});
+
+// KPI table
+document.getElementById('kpiTable').innerHTML = KPIS.map(k => {
+    const statusClass = 'status-'+k.status;
+    const statusLabel = k.status==='above'?'Above':k.status==='near'?'Near':'Below';
+    const barPct = Math.min(k.pct, 200) / 2;
+    const barColor = k.status==='above'?'#4caf50':k.status==='near'?'#ff9800':'#f44336';
+    return `<div class="bench-row"><div class="d-flex justify-content-between mb-1"><span style="color:#e6edf3;">${k.kpi}</span><span class="${statusClass}" style="font-weight:600;">${statusLabel}</span></div><div class="d-flex justify-content-between mb-1"><small style="color:#8b949e;">Yours: <strong style="color:#e6edf3;">${k.yours}</strong></small><small style="color:#8b949e;">Benchmark: ${k.benchmark}</small></div><div class="bench-bar"><div class="bench-fill" style="width:${barPct}%;background:${barColor};"></div><div class="bench-marker" style="left:50%;"></div></div></div>`;
+}).join('');
+
+// Priorities
+const PRIORITIES = [
+    {area:'Page Load Speed',gap:'4.2s vs 2.5s target',action:'Optimize images, enable CDN, minimize JS bundles',impact:'Could reduce bounce rate by 20%',priority:'Critical'},
+    {area:'Organic Traffic Growth',gap:'8% vs 15% industry avg',action:'Increase SEO content production to 12 posts/month, build backlinks',impact:'Projected +$18K monthly organic revenue',priority:'High'},
+    {area:'Bounce Rate',gap:'52% vs 40% benchmark',action:'Improve page load speed, A/B test landing pages, add exit-intent',impact:'Could increase conversions by 15%',priority:'High'},
+    {area:'Content Engagement',gap:'4.2% vs 5.0% benchmark',action:'Add interactive elements, improve CTAs, personalize content',impact:'+20% more content-attributed leads',priority:'Medium'},
+    {area:'Social Media ROAS',gap:'2.3x vs 2.5x benchmark',action:'Refine audience targeting, test new creatives, optimize bid strategy',impact:'Additional $4K monthly revenue',priority:'Medium'}
+];
+
+document.getElementById('priorities').innerHTML = PRIORITIES.map(p => {
+    const color = p.priority==='Critical'?'#f44336':p.priority==='High'?'#e91e63':'#ff9800';
+    return `<div class="d-flex align-items-start gap-2 mb-3"><span class="badge" style="background:${color};min-width:55px;font-size:0.7rem;">${p.priority}</span><div><strong style="color:#e6edf3;">${p.area}</strong> <small style="color:#f44336;">(${p.gap})</small><br><small style="color:#c9d1d9;">${p.action}</small><br><small style="color:#4caf50;">${p.impact}</small></div></div>`;
+}).join('');
+</script>
+{% endblock %}

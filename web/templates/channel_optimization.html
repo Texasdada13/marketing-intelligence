@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block title %}Channel Optimization - Marketing Intelligence{% endblock %}
+{% block extra_css %}
+<style>
+    .channel-card { padding: 16px; border-radius: 10px; background: var(--card-bg); border: 1px solid rgba(233,30,99,0.15); margin-bottom: 10px; }
+    .alloc-bar { height: 12px; border-radius: 6px; background: rgba(255,255,255,0.1); overflow: hidden; }
+    .alloc-fill { height: 100%; border-radius: 6px; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-start mb-4">
+        <div>
+            <h2 class="text-white"><i class="bi bi-diagram-3 me-2" style="color:var(--accent-color);"></i>Channel Optimization</h2>
+            <p style="color:#8b949e;">Analyze channel performance, optimize budget allocation, and maximize ROAS</p>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-2"><div class="stat-card text-center"><div class="stat-value">7</div><small style="color:#8b949e;">Active Channels</small></div></div>
+        <div class="col-md-2"><div class="stat-card text-center"><div class="stat-value" style="color:#4caf50;">$68K</div><small style="color:#8b949e;">Monthly Spend</small></div></div>
+        <div class="col-md-2"><div class="stat-card text-center"><div class="stat-value" style="color:#e91e63;">$284K</div><small style="color:#8b949e;">Monthly Revenue</small></div></div>
+        <div class="col-md-2"><div class="stat-card text-center"><div class="stat-value">4.2x</div><small style="color:#8b949e;">Blended ROAS</small></div></div>
+        <div class="col-md-2"><div class="stat-card text-center"><div class="stat-value" style="color:#4caf50;">+12%</div><small style="color:#8b949e;">MoM Growth</small></div></div>
+        <div class="col-md-2"><div class="stat-card text-center"><div class="stat-value" style="color:#ff9800;">$42</div><small style="color:#8b949e;">Blended CPA</small></div></div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="card mb-4">
+                <div class="card-header"><h5 class="mb-0 text-white">Channel Performance Comparison</h5></div>
+                <div class="card-body"><canvas id="channelPerfChart" height="300"></canvas></div>
+            </div>
+            <div class="card mb-4">
+                <div class="card-header"><h5 class="mb-0 text-white">Revenue Trend by Channel</h5></div>
+                <div class="card-body"><canvas id="trendChart" height="260"></canvas></div>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="card mb-4">
+                <div class="card-header"><h5 class="mb-0 text-white">Budget Allocation</h5></div>
+                <div class="card-body"><canvas id="allocChart" height="220"></canvas></div>
+            </div>
+            <div class="card mb-4">
+                <div class="card-header"><h5 class="mb-0 text-white">Channel Efficiency</h5></div>
+                <div class="card-body" id="channelEfficiency"></div>
+            </div>
+            <div class="card">
+                <div class="card-header"><h5 class="mb-0 text-white"><i class="bi bi-arrow-repeat me-2"></i>Reallocation Suggestions</h5></div>
+                <div class="card-body" id="suggestions"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+const CHANNELS = [
+    {name:'Paid Search',spend:22300,revenue:96000,conv:1620,cpa:13.8,roas:4.3,trend:'up',color:'#e91e63'},
+    {name:'Email Marketing',spend:4000,revenue:60000,conv:980,cpa:4.1,roas:15.0,trend:'up',color:'#1e88e5'},
+    {name:'Social Media (Paid)',spend:20000,revenue:45700,conv:850,cpa:23.5,roas:2.3,trend:'stable',color:'#9c27b0'},
+    {name:'Display/Retargeting',spend:4500,revenue:22000,conv:420,cpa:10.7,roas:4.9,trend:'up',color:'#ff9800'},
+    {name:'Content Marketing',spend:8200,revenue:32000,conv:540,cpa:15.2,roas:3.9,trend:'stable',color:'#4caf50'},
+    {name:'Affiliate',spend:6000,revenue:18000,conv:310,cpa:19.4,roas:3.0,trend:'down',color:'#795548'},
+    {name:'SEO (Organic)',spend:3000,revenue:10300,conv:280,cpa:10.7,roas:3.4,trend:'up',color:'#607d8b'}
+];
+
+// Channel performance
+new Chart(document.getElementById('channelPerfChart'), {
+    type: 'bar',
+    data: {
+        labels: CHANNELS.map(c => c.name),
+        datasets: [
+            {label:'Revenue',data:CHANNELS.map(c=>c.revenue),backgroundColor:CHANNELS.map(c=>c.color+'CC')},
+            {label:'Spend',data:CHANNELS.map(c=>c.spend),backgroundColor:'rgba(255,255,255,0.15)'}
+        ]
+    },
+    options: {responsive:true, scales:{y:{ticks:{color:'#8b949e',callback:v=>'$'+(v/1000)+'K'},grid:{color:'rgba(255,255,255,0.1)'}},x:{ticks:{color:'#8b949e',maxRotation:45},grid:{color:'rgba(255,255,255,0.05)'}}}, plugins:{legend:{position:'bottom',labels:{color:'#8b949e'}}}}
+});
+
+// Revenue trend
+new Chart(document.getElementById('trendChart'), {
+    type: 'line',
+    data: {
+        labels: ['Sep','Oct','Nov','Dec','Jan','Feb'],
+        datasets: [
+            {label:'Paid Search',data:[72,78,82,88,92,96],borderColor:'#e91e63',tension:0.3},
+            {label:'Email',data:[42,45,48,52,56,60],borderColor:'#1e88e5',tension:0.3},
+            {label:'Social',data:[38,40,42,44,44,45.7],borderColor:'#9c27b0',tension:0.3},
+            {label:'Content',data:[22,24,26,28,30,32],borderColor:'#4caf50',tension:0.3}
+        ]
+    },
+    options: {responsive:true, scales:{y:{ticks:{color:'#8b949e',callback:v=>'$'+v+'K'},grid:{color:'rgba(255,255,255,0.1)'}},x:{ticks:{color:'#8b949e'},grid:{color:'rgba(255,255,255,0.05)'}}}, plugins:{legend:{position:'bottom',labels:{color:'#8b949e'}}}}
+});
+
+// Budget allocation
+new Chart(document.getElementById('allocChart'), {
+    type: 'doughnut',
+    data: {
+        labels: CHANNELS.map(c=>c.name),
+        datasets: [{data:CHANNELS.map(c=>c.spend),backgroundColor:CHANNELS.map(c=>c.color)}]
+    },
+    options: {responsive:true, plugins:{legend:{position:'bottom',labels:{color:'#8b949e',font:{size:10}}}}}
+});
+
+// Channel efficiency
+document.getElementById('channelEfficiency').innerHTML = CHANNELS.map(c => {
+    const roasColor = c.roas>=5?'#4caf50':c.roas>=3?'#ff9800':'#f44336';
+    const trendIcon = c.trend==='up'?'<i class="bi bi-arrow-up-short text-success"></i>':c.trend==='down'?'<i class="bi bi-arrow-down-short text-danger"></i>':'<i class="bi bi-dash text-muted"></i>';
+    const pct = Math.min(c.roas/15*100,100);
+    return `<div class="channel-card"><div class="d-flex justify-content-between mb-1"><strong style="color:#e6edf3;">${c.name}</strong><span style="color:${roasColor};font-weight:700;">${c.roas}x ROAS ${trendIcon}</span></div><div class="alloc-bar"><div class="alloc-fill" style="width:${pct}%;background:${c.color};"></div></div><small style="color:#8b949e;">CPA: $${c.cpa} &middot; Conv: ${c.conv.toLocaleString()}</small></div>`;
+}).join('');
+
+// Suggestions
+const SUGGESTIONS = [
+    {action:'Shift $3K from Affiliate to Email Marketing',impact:'+$45K projected revenue',reason:'Email has 5x better ROAS than Affiliate'},
+    {action:'Increase Paid Search budget by 15%',impact:'+$14K projected revenue',reason:'ROAS stable at 4.3x with headroom to scale'},
+    {action:'Test TikTok as new Social channel',impact:'Potential new audience reach',reason:'CPM 40% lower than Instagram for target demo'},
+    {action:'Reduce Social Media spend by 10%',impact:'Save $2K/month',reason:'ROAS declining, reallocate to higher-performing channels'}
+];
+
+document.getElementById('suggestions').innerHTML = SUGGESTIONS.map(s =>
+    `<div class="d-flex align-items-start gap-2 mb-3"><i class="bi bi-arrow-right-circle" style="color:var(--accent-color);margin-top:2px;"></i><div><span style="color:#e6edf3;font-size:0.9rem;">${s.action}</span><br><small style="color:#4caf50;">${s.impact}</small><br><small style="color:#8b949e;">${s.reason}</small></div></div>`
+).join('');
+</script>
+{% endblock %}

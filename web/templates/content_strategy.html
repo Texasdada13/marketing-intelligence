@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% block title %}Content Strategy - Marketing Intelligence{% endblock %}
+{% block extra_css %}
+<style>
+    .content-item { padding: 14px 16px; border-radius: 10px; background: var(--card-bg); border: 1px solid rgba(233,30,99,0.15); margin-bottom: 8px; }
+    .journey-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 600; }
+    .journey-awareness { background: rgba(233,30,99,0.15); color: #e91e63; }
+    .journey-consideration { background: rgba(156,39,176,0.15); color: #9c27b0; }
+    .journey-decision { background: rgba(30,136,229,0.15); color: #1e88e5; }
+    .journey-retention { background: rgba(76,175,80,0.15); color: #4caf50; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-start mb-4">
+        <div>
+            <h2 class="text-white"><i class="bi bi-file-text me-2" style="color:var(--accent-color);"></i>Content Strategy</h2>
+            <p style="color:#8b949e;">Content performance analysis across the buyer journey with engagement tracking</p>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-2"><div class="stat-card text-center"><div class="stat-value">142</div><small style="color:#8b949e;">Active Assets</small></div></div>
+        <div class="col-md-2"><div class="stat-card text-center"><div class="stat-value" style="color:#e91e63;">328K</div><small style="color:#8b949e;">Total Views</small></div></div>
+        <div class="col-md-2"><div class="stat-card text-center"><div class="stat-value" style="color:#9c27b0;">4.2%</div><small style="color:#8b949e;">Avg Engagement</small></div></div>
+        <div class="col-md-2"><div class="stat-card text-center"><div class="stat-value" style="color:#1e88e5;">2,840</div><small style="color:#8b949e;">Leads from Content</small></div></div>
+        <div class="col-md-2"><div class="stat-card text-center"><div class="stat-value" style="color:#4caf50;">$32K</div><small style="color:#8b949e;">Revenue Attributed</small></div></div>
+        <div class="col-md-2"><div class="stat-card text-center"><div class="stat-value" style="color:#ff9800;">3:24</div><small style="color:#8b949e;">Avg Time on Page</small></div></div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="card mb-4">
+                <div class="card-header"><h5 class="mb-0 text-white">Content Performance by Type</h5></div>
+                <div class="card-body"><canvas id="typeChart" height="280"></canvas></div>
+            </div>
+            <div class="card">
+                <div class="card-header"><h5 class="mb-0 text-white">Top Performing Content</h5></div>
+                <div class="card-body" id="contentList"></div>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="card mb-4">
+                <div class="card-header"><h5 class="mb-0 text-white">Buyer Journey Coverage</h5></div>
+                <div class="card-body"><canvas id="journeyChart" height="220"></canvas></div>
+            </div>
+            <div class="card mb-4">
+                <div class="card-header"><h5 class="mb-0 text-white">Engagement Trend</h5></div>
+                <div class="card-body"><canvas id="engagementChart" height="200"></canvas></div>
+            </div>
+            <div class="card">
+                <div class="card-header"><h5 class="mb-0 text-white"><i class="bi bi-pencil-square me-2"></i>Content Recommendations</h5></div>
+                <div class="card-body" id="contentRecs"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+const CONTENT = [
+    {title:'Ultimate Guide to Cloud Migration',type:'Blog Post',stage:'Awareness',views:42000,engagement:5.8,leads:320,revenue:8200,score:95},
+    {title:'2025 Industry Trends Report',type:'Whitepaper',stage:'Awareness',views:18500,engagement:8.2,leads:680,revenue:12400,score:92},
+    {title:'ROI Calculator Tool',type:'Interactive',stage:'Consideration',views:12800,engagement:12.5,leads:450,revenue:15600,score:98},
+    {title:'Customer Success: Acme Corp',type:'Case Study',stage:'Decision',views:8200,engagement:6.4,leads:180,revenue:9800,score:88},
+    {title:'Product Comparison Guide',type:'Blog Post',stage:'Consideration',views:15600,engagement:4.2,leads:220,revenue:4200,score:76},
+    {title:'Getting Started Webinar',type:'Video',stage:'Awareness',views:22000,engagement:3.8,leads:380,revenue:6800,score:82},
+    {title:'Platform Demo Video',type:'Video',stage:'Decision',views:9400,engagement:7.1,leads:160,revenue:5400,score:84},
+    {title:'Email Automation Playbook',type:'Ebook',stage:'Consideration',views:6800,engagement:9.5,leads:290,revenue:3200,score:80},
+    {title:'Monthly Newsletter',type:'Email',stage:'Retention',views:45000,engagement:2.8,leads:120,revenue:2400,score:65},
+    {title:'Implementation Guide',type:'Documentation',stage:'Retention',views:5200,engagement:6.8,leads:45,revenue:1200,score:72}
+];
+
+// Content by type
+new Chart(document.getElementById('typeChart'), {
+    type: 'bar',
+    data: {
+        labels: ['Blog Posts','Whitepapers','Videos','Case Studies','Ebooks','Interactive','Email'],
+        datasets: [
+            {label:'Views (K)',data:[57.6,18.5,31.4,8.2,6.8,12.8,45.0],backgroundColor:'rgba(233,30,99,0.6)'},
+            {label:'Leads',data:[540,680,540,180,290,450,120],backgroundColor:'rgba(156,39,176,0.5)'},
+            {label:'Revenue ($K)',data:[12.4,12.4,12.2,9.8,3.2,15.6,2.4],backgroundColor:'rgba(76,175,80,0.5)'}
+        ]
+    },
+    options: {responsive:true, scales:{y:{ticks:{color:'#8b949e'},grid:{color:'rgba(255,255,255,0.1)'}},x:{ticks:{color:'#8b949e'},grid:{color:'rgba(255,255,255,0.05)'}}}, plugins:{legend:{position:'bottom',labels:{color:'#8b949e'}}}}
+});
+
+// Buyer journey
+new Chart(document.getElementById('journeyChart'), {
+    type: 'doughnut',
+    data: {
+        labels: ['Awareness','Consideration','Decision','Retention'],
+        datasets: [{data:[45,28,18,9],backgroundColor:['#e91e63','#9c27b0','#1e88e5','#4caf50']}]
+    },
+    options: {responsive:true, plugins:{legend:{position:'bottom',labels:{color:'#8b949e'}}}}
+});
+
+// Engagement trend
+new Chart(document.getElementById('engagementChart'), {
+    type: 'line',
+    data: {
+        labels: ['Sep','Oct','Nov','Dec','Jan','Feb'],
+        datasets: [
+            {label:'Engagement Rate',data:[3.2,3.5,3.8,3.9,4.0,4.2],borderColor:'#e91e63',backgroundColor:'rgba(233,30,99,0.1)',fill:true,tension:0.3},
+            {label:'Content Leads',data:[380,420,460,490,510,540],borderColor:'#4caf50',tension:0.3,fill:false,yAxisID:'y1'}
+        ]
+    },
+    options: {responsive:true, scales:{y:{ticks:{color:'#8b949e',callback:v=>v+'%'},grid:{color:'rgba(255,255,255,0.1)'}},y1:{position:'right',ticks:{color:'#8b949e'},grid:{display:false}},x:{ticks:{color:'#8b949e'},grid:{color:'rgba(255,255,255,0.05)'}}}, plugins:{legend:{position:'bottom',labels:{color:'#8b949e'}}}}
+});
+
+// Content list
+document.getElementById('contentList').innerHTML = CONTENT.map(c => {
+    const stageClass = c.stage==='Awareness'?'journey-awareness':c.stage==='Consideration'?'journey-consideration':c.stage==='Decision'?'journey-decision':'journey-retention';
+    const scoreColor = c.score>=90?'#4caf50':c.score>=75?'#8bc34a':c.score>=60?'#ff9800':'#f44336';
+    return `<div class="content-item d-flex align-items-center gap-3">
+        <div style="min-width:40px;height:40px;border-radius:8px;background:${scoreColor}20;color:${scoreColor};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.9rem;">${c.score}</div>
+        <div class="flex-fill">
+            <strong style="color:#e6edf3;">${c.title}</strong><br>
+            <small style="color:#8b949e;">${c.type} &middot; ${(c.views/1000).toFixed(1)}K views &middot; ${c.engagement}% engagement &middot; ${c.leads} leads</small>
+        </div>
+        <span class="journey-badge ${stageClass}">${c.stage}</span>
+    </div>`;
+}).join('');
+
+// Recommendations
+const RECS = [
+    {rec:'Create more interactive tools (calculators, assessments)',reason:'Interactive content has 3x higher lead gen rate',priority:'High'},
+    {rec:'Develop 3 more case studies for Decision stage',reason:'Decision stage content only 18% of library but highest revenue per view',priority:'High'},
+    {rec:'Repurpose Industry Trends Report into blog series',reason:'High-performing whitepaper can drive 5-8 additional blog posts',priority:'Medium'},
+    {rec:'Add video CTAs to top blog posts',reason:'Blog posts with embedded video have 2x engagement',priority:'Medium'},
+    {rec:'Launch customer success story video series',reason:'Video + case study combo drives highest conversion',priority:'High'}
+];
+
+document.getElementById('contentRecs').innerHTML = RECS.map(r => {
+    const color = r.priority==='High'?'#e91e63':'#ff9800';
+    return `<div class="d-flex align-items-start gap-2 mb-3"><span class="badge" style="background:${color};min-width:45px;font-size:0.7rem;">${r.priority}</span><div><span style="color:#e6edf3;font-size:0.9rem;">${r.rec}</span><br><small style="color:#8b949e;">${r.reason}</small></div></div>`;
+}).join('');
+</script>
+{% endblock %}

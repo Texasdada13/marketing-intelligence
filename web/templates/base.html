@@ -308,7 +308,19 @@
             gap: 0.5rem;
         }
 
+        /* Card text contrast for dark theme */
+        .card h5, .card h4, .card h3 { color: #e6edf3; }
+        .card .text-muted { color: #8b949e !important; }
+        .card p:not(.text-muted) { color: #c9d1d9; }
+        .card li { color: #c9d1d9; }
+        .card ul.text-muted li { color: #8b949e; }
+        h2, h3, h4 { color: #e6edf3; }
+
         /* Light Theme */
+        body.light-theme .card h5, body.light-theme .card h4, body.light-theme .card h3 { color: #1f2937; }
+        body.light-theme .card p:not(.text-muted) { color: #374151; }
+        body.light-theme .card li { color: #374151; }
+        body.light-theme h2, body.light-theme h3, body.light-theme h4 { color: #1f2937; }
         body.light-theme {
             --dark-bg: #f5f5f5;
             --card-bg: #ffffff;
@@ -338,6 +350,19 @@
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
                         <a class="nav-link" href="/dashboard"><i class="bi bi-speedometer2 me-1"></i>Dashboard</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-tools me-1"></i>Tools
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-dark">
+                            <li><a class="dropdown-item" href="/campaign-analysis"><i class="bi bi-megaphone me-2"></i>Campaign Analysis</a></li>
+                            <li><a class="dropdown-item" href="/channel-optimization"><i class="bi bi-diagram-3 me-2"></i>Channel Optimization</a></li>
+                            <li><a class="dropdown-item" href="/funnel-analytics"><i class="bi bi-funnel me-2"></i>Funnel Analytics</a></li>
+                            <li><a class="dropdown-item" href="/content-strategy"><i class="bi bi-file-text me-2"></i>Content Strategy</a></li>
+                            <li><a class="dropdown-item" href="/roi-analysis"><i class="bi bi-graph-up me-2"></i>ROI Analysis</a></li>
+                            <li><a class="dropdown-item" href="/industry-benchmarks"><i class="bi bi-bar-chart me-2"></i>Industry Benchmarks</a></li>
+                        </ul>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="/integrations"><i class="bi bi-plug me-1"></i>Integrations</a>

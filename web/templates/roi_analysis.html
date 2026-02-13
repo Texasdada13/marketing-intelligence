@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% block title %}ROI Analysis - Marketing Intelligence{% endblock %}
+{% block extra_css %}
+<style>
+    .roi-card { padding: 16px; border-radius: 10px; background: var(--card-bg); border: 1px solid rgba(233,30,99,0.15); margin-bottom: 10px; }
+    .metric-highlight { font-size: 1.8rem; font-weight: 700; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-start mb-4">
+        <div>
+            <h2 class="text-white"><i class="bi bi-graph-up me-2" style="color:var(--accent-color);"></i>ROI Analysis</h2>
+            <p style="color:#8b949e;">Marketing ROI tracking, CAC/CLV analysis, and spend efficiency optimization</p>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-2"><div class="stat-card text-center"><div class="stat-value" style="color:#4caf50;">318%</div><small style="color:#8b949e;">Marketing ROI</small></div></div>
+        <div class="col-md-2"><div class="stat-card text-center"><div class="stat-value" style="color:#e91e63;">$42</div><small style="color:#8b949e;">CAC</small></div></div>
+        <div class="col-md-2"><div class="stat-card text-center"><div class="stat-value" style="color:#4caf50;">$2,840</div><small style="color:#8b949e;">CLV</small></div></div>
+        <div class="col-md-2"><div class="stat-card text-center"><div class="stat-value">67.6x</div><small style="color:#8b949e;">CLV:CAC Ratio</small></div></div>
+        <div class="col-md-2"><div class="stat-card text-center"><div class="stat-value" style="color:#1e88e5;">2.8 mo</div><small style="color:#8b949e;">Payback Period</small></div></div>
+        <div class="col-md-2"><div class="stat-card text-center"><div class="stat-value" style="color:#ff9800;">$68K</div><small style="color:#8b949e;">Monthly Spend</small></div></div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="card mb-4">
+                <div class="card-header"><h5 class="mb-0 text-white">Revenue vs Spend Trend</h5></div>
+                <div class="card-body"><canvas id="roiTrendChart" height="280"></canvas></div>
+            </div>
+            <div class="card mb-4">
+                <div class="card-header"><h5 class="mb-0 text-white">ROI by Channel</h5></div>
+                <div class="card-body"><canvas id="channelROIChart" height="260"></canvas></div>
+            </div>
+            <div class="card">
+                <div class="card-header"><h5 class="mb-0 text-white">Monthly P&L Summary</h5></div>
+                <div class="card-body" id="plTable"></div>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="card mb-4">
+                <div class="card-header"><h5 class="mb-0 text-white">CAC Trend</h5></div>
+                <div class="card-body"><canvas id="cacChart" height="200"></canvas></div>
+            </div>
+            <div class="card mb-4">
+                <div class="card-header"><h5 class="mb-0 text-white">CLV by Segment</h5></div>
+                <div class="card-body"><canvas id="clvChart" height="220"></canvas></div>
+            </div>
+            <div class="card mb-4">
+                <div class="card-header"><h5 class="mb-0 text-white">Spend Efficiency</h5></div>
+                <div class="card-body" id="efficiencyMetrics"></div>
+            </div>
+            <div class="card">
+                <div class="card-header"><h5 class="mb-0 text-white"><i class="bi bi-cash-stack me-2"></i>Budget Recommendations</h5></div>
+                <div class="card-body" id="budgetRecs"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+// Revenue vs Spend trend
+new Chart(document.getElementById('roiTrendChart'), {
+    type: 'line',
+    data: {
+        labels: ['Sep','Oct','Nov','Dec','Jan','Feb'],
+        datasets: [
+            {label:'Revenue',data:[215,232,248,260,272,284],borderColor:'#4caf50',backgroundColor:'rgba(76,175,80,0.1)',fill:true,tension:0.3,borderWidth:3},
+            {label:'Spend',data:[58,60,62,64,66,68],borderColor:'#e91e63',backgroundColor:'rgba(233,30,99,0.1)',fill:true,tension:0.3},
+            {label:'Profit',data:[157,172,186,196,206,216],borderColor:'#1e88e5',borderDash:[5,5],tension:0.3,fill:false}
+        ]
+    },
+    options: {responsive:true, scales:{y:{ticks:{color:'#8b949e',callback:v=>'$'+v+'K'},grid:{color:'rgba(255,255,255,0.1)'}},x:{ticks:{color:'#8b949e'},grid:{color:'rgba(255,255,255,0.05)'}}}, plugins:{legend:{position:'bottom',labels:{color:'#8b949e'}}}}
+});
+
+// ROI by channel
+new Chart(document.getElementById('channelROIChart'), {
+    type: 'bar',
+    data: {
+        labels: ['Email','Retargeting','Paid Search','Content','SEO','Social','Affiliate'],
+        datasets: [{
+            label:'ROI %',
+            data:[1400,389,331,290,243,129,200],
+            backgroundColor:['#1e88e5','#ff9800','#e91e63','#4caf50','#607d8b','#9c27b0','#795548']
+        }]
+    },
+    options: {responsive:true, indexAxis:'y', scales:{x:{ticks:{color:'#8b949e',callback:v=>v+'%'},grid:{color:'rgba(255,255,255,0.05)'}},y:{ticks:{color:'#8b949e'},grid:{color:'rgba(255,255,255,0.1)'}}}, plugins:{legend:{display:false}}}
+});
+
+// CAC trend
+new Chart(document.getElementById('cacChart'), {
+    type: 'line',
+    data: {
+        labels: ['Sep','Oct','Nov','Dec','Jan','Feb'],
+        datasets: [
+            {label:'CAC',data:[52,50,48,46,44,42],borderColor:'#e91e63',backgroundColor:'rgba(233,30,99,0.1)',fill:true,tension:0.3},
+            {label:'Industry Avg',data:[65,65,65,65,65,65],borderColor:'#8b949e',borderDash:[5,5],tension:0}
+        ]
+    },
+    options: {responsive:true, scales:{y:{ticks:{color:'#8b949e',callback:v=>'$'+v},grid:{color:'rgba(255,255,255,0.1)'}},x:{ticks:{color:'#8b949e'},grid:{color:'rgba(255,255,255,0.05)'}}}, plugins:{legend:{position:'bottom',labels:{color:'#8b949e'}}}}
+});
+
+// CLV by segment
+new Chart(document.getElementById('clvChart'), {
+    type: 'bar',
+    data: {
+        labels: ['Enterprise','Mid-Market','SMB','Startup','Self-Serve'],
+        datasets: [{
+            label:'CLV',
+            data:[8500,4200,2840,1600,680],
+            backgroundColor:['#e91e63','#9c27b0','#1e88e5','#ff9800','#4caf50']
+        }]
+    },
+    options: {responsive:true, scales:{y:{ticks:{color:'#8b949e',callback:v=>'$'+v.toLocaleString()},grid:{color:'rgba(255,255,255,0.1)'}},x:{ticks:{color:'#8b949e'},grid:{color:'rgba(255,255,255,0.05)'}}}, plugins:{legend:{display:false}}}
+});
+
+// P&L Table
+const PL = [
+    {month:'Sep',revenue:215000,spend:58000,profit:157000,roi:271},
+    {month:'Oct',revenue:232000,spend:60000,profit:172000,roi:287},
+    {month:'Nov',revenue:248000,spend:62000,profit:186000,roi:300},
+    {month:'Dec',revenue:260000,spend:64000,profit:196000,roi:306},
+    {month:'Jan',revenue:272000,spend:66000,profit:206000,roi:312},
+    {month:'Feb',revenue:284000,spend:68000,profit:216000,roi:318}
+];
+
+document.getElementById('plTable').innerHTML = `<div class="table-responsive"><table class="table"><thead><tr><th>Month</th><th>Revenue</th><th>Spend</th><th>Profit</th><th>ROI</th></tr></thead><tbody>${PL.map(p =>
+    `<tr><td style="color:#e6edf3;">${p.month}</td><td style="color:#4caf50;">$${(p.revenue/1000).toFixed(0)}K</td><td style="color:#e91e63;">$${(p.spend/1000).toFixed(0)}K</td><td style="color:#1e88e5;">$${(p.profit/1000).toFixed(0)}K</td><td><span class="badge bg-success">${p.roi}%</span></td></tr>`
+).join('')}</tbody></table></div>`;
+
+// Efficiency metrics
+const EFFICIENCY = [
+    {label:'Cost per Lead',value:'$8.06',benchmark:'$12.50',status:'good'},
+    {label:'Cost per MQL',value:'$32.23',benchmark:'$45.00',status:'good'},
+    {label:'Cost per SQL',value:'$100',benchmark:'$150',status:'good'},
+    {label:'Cost per Opportunity',value:'$166.67',benchmark:'$200',status:'good'},
+    {label:'Revenue per $1 Spent',value:'$4.18',benchmark:'$3.00',status:'good'},
+    {label:'Marketing as % of Revenue',value:'24%',benchmark:'30%',status:'good'}
+];
+
+document.getElementById('efficiencyMetrics').innerHTML = EFFICIENCY.map(e => {
+    const color = e.status==='good'?'#4caf50':'#ff9800';
+    return `<div class="d-flex justify-content-between align-items-center mb-2"><span style="color:#c9d1d9;">${e.label}</span><div><strong style="color:${color};">${e.value}</strong> <small style="color:#8b949e;">vs ${e.benchmark}</small></div></div>`;
+}).join('');
+
+// Budget recommendations
+const RECS = [
+    {rec:'Increase Email marketing budget by 25%',impact:'+$15K monthly revenue at current ROI',priority:'High'},
+    {rec:'Shift $3K from Social to Retargeting',impact:'+$9K projected monthly revenue',priority:'High'},
+    {rec:'Invest $5K in SEO content production',impact:'Long-term CAC reduction of 15%',priority:'Medium'},
+    {rec:'Test $2K on podcast sponsorships',impact:'New channel diversification opportunity',priority:'Low'}
+];
+
+document.getElementById('budgetRecs').innerHTML = RECS.map(r => {
+    const color = r.priority==='High'?'#e91e63':r.priority==='Medium'?'#ff9800':'#8b949e';
+    return `<div class="d-flex align-items-start gap-2 mb-3"><span class="badge" style="background:${color};min-width:45px;font-size:0.7rem;">${r.priority}</span><div><span style="color:#e6edf3;font-size:0.9rem;">${r.rec}</span><br><small style="color:#4caf50;">${r.impact}</small></div></div>`;
+}).join('');
+</script>
+{% endblock %}

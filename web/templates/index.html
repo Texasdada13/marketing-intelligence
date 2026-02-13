@@ -23,91 +23,47 @@
 <div class="container">
     <div class="row mb-5">
         <div class="col-12 text-center mb-4">
-            <h2>Marketing Excellence for SMBs</h2>
-            <p class="text-muted">Enterprise-grade marketing intelligence without the enterprise price tag</p>
+            <h2 class="text-white">Marketing Excellence for SMBs</h2>
+            <p style="color:#8b949e;">Enterprise-grade marketing intelligence without the enterprise price tag</p>
         </div>
     </div>
 
     <div class="row g-4 mb-5">
+        {% for icon, title, desc, url in [
+            ('bi-megaphone', 'Campaign Analysis', 'Multi-dimensional campaign scoring with performance tracking and optimization recommendations', '/campaign-analysis'),
+            ('bi-diagram-3', 'Channel Optimization', 'Analyze channel performance, optimize budget allocation, and maximize ROAS across all channels', '/channel-optimization'),
+            ('bi-funnel', 'Funnel Analytics', 'Identify funnel leaks, optimize conversion rates, and improve customer journey', '/funnel-analytics'),
+            ('bi-file-text', 'Content Strategy', 'Content performance analysis across the buyer journey with engagement and conversion tracking', '/content-strategy'),
+            ('bi-graph-up', 'ROI Analysis', 'Marketing ROI tracking, CAC/CLV analysis, and spend efficiency optimization', '/roi-analysis'),
+            ('bi-bar-chart', 'Industry Benchmarks', 'Compare your KPIs against industry standards with actionable improvement plans', '/industry-benchmarks')
+        ] %}
         <div class="col-md-4">
-            <div class="card h-100">
-                <div class="card-body text-center p-4">
-                    <div class="feature-icon mx-auto">
-                        <i class="bi bi-megaphone text-white"></i>
+            <a href="{{ url }}" class="text-decoration-none">
+                <div class="card h-100" style="transition: transform 0.15s, box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-6px)';this.style.boxShadow='0 8px 25px rgba(233,30,99,0.2)';" onmouseout="this.style.transform='';this.style.boxShadow='';">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon mx-auto">
+                            <i class="bi {{ icon }} text-white"></i>
+                        </div>
+                        <h5>{{ title }}</h5>
+                        <p class="text-muted">{{ desc }}</p>
                     </div>
-                    <h5>Campaign Analysis</h5>
-                    <p class="text-muted">Multi-dimensional campaign scoring with performance tracking and optimization recommendations</p>
                 </div>
-            </div>
+            </a>
         </div>
-        <div class="col-md-4">
-            <div class="card h-100">
-                <div class="card-body text-center p-4">
-                    <div class="feature-icon mx-auto">
-                        <i class="bi bi-diagram-3 text-white"></i>
-                    </div>
-                    <h5>Channel Optimization</h5>
-                    <p class="text-muted">Analyze channel performance, optimize budget allocation, and maximize ROAS across all channels</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card h-100">
-                <div class="card-body text-center p-4">
-                    <div class="feature-icon mx-auto">
-                        <i class="bi bi-funnel text-white"></i>
-                    </div>
-                    <h5>Funnel Analytics</h5>
-                    <p class="text-muted">Identify funnel leaks, optimize conversion rates, and improve customer journey</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card h-100">
-                <div class="card-body text-center p-4">
-                    <div class="feature-icon mx-auto">
-                        <i class="bi bi-file-text text-white"></i>
-                    </div>
-                    <h5>Content Strategy</h5>
-                    <p class="text-muted">Content performance analysis across the buyer journey with engagement and conversion tracking</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card h-100">
-                <div class="card-body text-center p-4">
-                    <div class="feature-icon mx-auto">
-                        <i class="bi bi-graph-up text-white"></i>
-                    </div>
-                    <h5>ROI Analysis</h5>
-                    <p class="text-muted">Marketing ROI tracking, CAC/CLV analysis, and spend efficiency optimization</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card h-100">
-                <div class="card-body text-center p-4">
-                    <div class="feature-icon mx-auto">
-                        <i class="bi bi-bar-chart text-white"></i>
-                    </div>
-                    <h5>Industry Benchmarks</h5>
-                    <p class="text-muted">Compare your KPIs against industry standards with actionable improvement plans</p>
-                </div>
-            </div>
-        </div>
+        {% endfor %}
     </div>
 
     <div class="row mb-5">
         <div class="col-12">
             <div class="card">
                 <div class="card-header">
-                    <h5 class="mb-0"><i class="bi bi-chat-dots me-2"></i>AI CMO Consultant</h5>
+                    <h5 class="mb-0 text-white"><i class="bi bi-chat-dots me-2"></i>AI CMO Consultant</h5>
                 </div>
                 <div class="card-body">
                     <div class="row align-items-center">
                         <div class="col-md-8">
-                            <p class="mb-2">Get expert marketing guidance powered by Claude AI. Ask about:</p>
-                            <ul class="text-muted">
+                            <p class="mb-2" style="color:#e6edf3;">Get expert marketing guidance powered by Claude AI. Ask about:</p>
+                            <ul style="color:#c9d1d9;">
                                 <li>Campaign performance and optimization strategies</li>
                                 <li>Marketing channel mix and budget allocation</li>
                                 <li>Content marketing effectiveness and strategy</li>

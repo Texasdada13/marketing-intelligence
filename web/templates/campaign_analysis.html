@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}Campaign Analysis - Marketing Intelligence{% endblock %}
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-start mb-4">
+        <div>
+            <h2 class="text-white"><i class="bi bi-megaphone me-2" style="color:var(--accent-color);"></i>Campaign Analysis</h2>
+            <p style="color:#8b949e;">Multi-dimensional campaign scoring with performance tracking and optimization</p>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-2"><div class="stat-card text-center"><div class="stat-value">18</div><small style="color:#8b949e;">Active Campaigns</small></div></div>
+        <div class="col-md-2"><div class="stat-card text-center"><div class="stat-value" style="color:#4caf50;">$284K</div><small style="color:#8b949e;">Total Revenue</small></div></div>
+        <div class="col-md-2"><div class="stat-card text-center"><div class="stat-value" style="color:#ff9800;">$68K</div><small style="color:#8b949e;">Total Spend</small></div></div>
+        <div class="col-md-2"><div class="stat-card text-center"><div class="stat-value" style="color:#e91e63;">4.2x</div><small style="color:#8b949e;">Avg ROAS</small></div></div>
+        <div class="col-md-2"><div class="stat-card text-center"><div class="stat-value" style="color:#4caf50;">3.8%</div><small style="color:#8b949e;">Avg Conv Rate</small></div></div>
+        <div class="col-md-2"><div class="stat-card text-center"><div class="stat-value" style="color:#1e88e5;">$42</div><small style="color:#8b949e;">Avg CPA</small></div></div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="card mb-4">
+                <div class="card-header"><h5 class="mb-0 text-white">Campaign Performance Overview</h5></div>
+                <div class="card-body"><canvas id="perfChart" height="280"></canvas></div>
+            </div>
+            <div class="card">
+                <div class="card-header"><h5 class="mb-0 text-white">All Campaigns</h5></div>
+                <div class="card-body" id="campaignTable"></div>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="card mb-4">
+                <div class="card-header"><h5 class="mb-0 text-white">Campaign Score Distribution</h5></div>
+                <div class="card-body"><canvas id="scoreChart" height="220"></canvas></div>
+            </div>
+            <div class="card mb-4">
+                <div class="card-header"><h5 class="mb-0 text-white">Spend by Channel</h5></div>
+                <div class="card-body"><canvas id="channelChart" height="220"></canvas></div>
+            </div>
+            <div class="card">
+                <div class="card-header"><h5 class="mb-0 text-white"><i class="bi bi-lightbulb me-2"></i>Optimization Tips</h5></div>
+                <div class="card-body" id="optimizationTips"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+const CAMPAIGNS = [
+    {name:'Spring Product Launch',channel:'Paid Search',status:'Active',spend:12500,revenue:52000,conv:3.8,roas:4.16,score:92,trend:'up'},
+    {name:'Brand Awareness Q1',channel:'Social Media',status:'Active',spend:8200,revenue:18500,conv:2.1,roas:2.26,score:68,trend:'stable'},
+    {name:'Email Nurture Series',channel:'Email',status:'Active',spend:1200,revenue:28000,conv:5.2,roas:23.3,score:96,trend:'up'},
+    {name:'Retargeting - Cart Abandon',channel:'Display',status:'Active',spend:4500,revenue:22000,conv:4.8,roas:4.89,score:88,trend:'up'},
+    {name:'LinkedIn Lead Gen',channel:'Social Media',status:'Active',spend:6800,revenue:15200,conv:2.4,roas:2.24,score:62,trend:'down'},
+    {name:'Google Shopping Feed',channel:'Paid Search',status:'Active',spend:9800,revenue:48000,conv:4.2,roas:4.90,score:90,trend:'up'},
+    {name:'Influencer Partnership',channel:'Social Media',status:'Active',spend:5000,revenue:12000,conv:1.8,roas:2.40,score:58,trend:'stable'},
+    {name:'Content Syndication',channel:'Content',status:'Active',spend:3200,revenue:8500,conv:1.5,roas:2.66,score:55,trend:'down'},
+    {name:'Webinar Funnel',channel:'Email',status:'Completed',spend:2800,revenue:32000,conv:6.1,roas:11.43,score:94,trend:'up'},
+    {name:'Holiday Promo 2024',channel:'Paid Search',status:'Completed',spend:14000,revenue:48000,conv:3.5,roas:3.43,score:78,trend:'stable'}
+];
+
+// Performance chart
+new Chart(document.getElementById('perfChart'), {
+    type: 'bar',
+    data: {
+        labels: CAMPAIGNS.slice(0,8).map(c => c.name.length > 20 ? c.name.substring(0,20)+'...' : c.name),
+        datasets: [
+            {label:'Revenue',data:CAMPAIGNS.slice(0,8).map(c=>c.revenue),backgroundColor:'rgba(233,30,99,0.7)'},
+            {label:'Spend',data:CAMPAIGNS.slice(0,8).map(c=>c.spend),backgroundColor:'rgba(156,39,176,0.5)'}
+        ]
+    },
+    options: {responsive:true, scales:{y:{ticks:{color:'#8b949e',callback:v=>'$'+v/1000+'K'},grid:{color:'rgba(255,255,255,0.1)'}},x:{ticks:{color:'#8b949e',maxRotation:45},grid:{color:'rgba(255,255,255,0.05)'}}}, plugins:{legend:{position:'bottom',labels:{color:'#8b949e'}}}}
+});
+
+// Score distribution
+new Chart(document.getElementById('scoreChart'), {
+    type: 'doughnut',
+    data: {
+        labels: ['Excellent (90+)','Good (70-89)','Fair (50-69)','Poor (<50)'],
+        datasets: [{data:[4,2,3,1],backgroundColor:['#4caf50','#8bc34a','#ff9800','#f44336']}]
+    },
+    options: {responsive:true, plugins:{legend:{position:'bottom',labels:{color:'#8b949e'}}}}
+});
+
+// Spend by channel
+new Chart(document.getElementById('channelChart'), {
+    type: 'doughnut',
+    data: {
+        labels: ['Paid Search','Social Media','Email','Display','Content'],
+        datasets: [{data:[36300,20000,4000,4500,3200],backgroundColor:['#e91e63','#9c27b0','#1e88e5','#ff9800','#4caf50']}]
+    },
+    options: {responsive:true, plugins:{legend:{position:'bottom',labels:{color:'#8b949e'}}}}
+});
+
+// Campaign table
+document.getElementById('campaignTable').innerHTML = `<div class="table-responsive"><table class="table table-hover"><thead><tr><th>Campaign</th><th>Channel</th><th>Spend</th><th>Revenue</th><th>ROAS</th><th>Conv%</th><th>Score</th></tr></thead><tbody>${CAMPAIGNS.map(c => {
+    const scoreColor = c.score>=90?'#4caf50':c.score>=70?'#8bc34a':c.score>=50?'#ff9800':'#f44336';
+    const trendIcon = c.trend==='up'?'<i class="bi bi-arrow-up-short text-success"></i>':c.trend==='down'?'<i class="bi bi-arrow-down-short text-danger"></i>':'<i class="bi bi-dash text-muted"></i>';
+    return `<tr><td><strong style="color:#e6edf3;">${c.name}</strong></td><td><small style="color:#8b949e;">${c.channel}</small></td><td>$${(c.spend/1000).toFixed(1)}K</td><td style="color:#4caf50;">$${(c.revenue/1000).toFixed(1)}K</td><td>${c.roas.toFixed(1)}x</td><td>${c.conv}%</td><td><span class="badge" style="background:${scoreColor};">${c.score}</span> ${trendIcon}</td></tr>`;
+}).join('')}</tbody></table></div>`;
+
+// Optimization tips
+const TIPS = [
+    {tip:'Increase budget for Email Nurture Series',reason:'Highest ROAS at 23.3x with strong conversion rate',priority:'High'},
+    {tip:'Pause Content Syndication campaign',reason:'Below target ROAS and declining trend',priority:'Medium'},
+    {tip:'A/B test LinkedIn ad creatives',reason:'CPA above target, conversion rate declining',priority:'High'},
+    {tip:'Scale Google Shopping Feed budget 20%',reason:'Consistent 4.9x ROAS with room to grow',priority:'High'},
+    {tip:'Launch lookalike audience from Webinar leads',reason:'Webinar funnel had highest conversion rate',priority:'Medium'}
+];
+
+document.getElementById('optimizationTips').innerHTML = TIPS.map(t => {
+    const color = t.priority==='High'?'#e91e63':'#ff9800';
+    return `<div class="d-flex align-items-start gap-2 mb-3"><span class="badge" style="background:${color};min-width:45px;font-size:0.7rem;">${t.priority}</span><div><span style="color:#e6edf3;font-size:0.9rem;">${t.tip}</span><br><small style="color:#8b949e;">${t.reason}</small></div></div>`;
+}).join('');
+</script>
+{% endblock %}
