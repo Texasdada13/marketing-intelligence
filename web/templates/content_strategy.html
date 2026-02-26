@@ -1,8 +1,9 @@
 {% extends "base.html" %}
 {% block title %}Content Strategy - Marketing Intelligence{% endblock %}
+{% block page_title %}Content Strategy{% endblock %}
 {% block extra_css %}
 <style>
-    .content-item { padding: 14px 16px; border-radius: 10px; background: var(--card-bg); border: 1px solid rgba(233,30,99,0.15); margin-bottom: 8px; }
+    .content-item { padding: 14px 16px; border-radius: 10px; background: var(--pt-bg-surface); border: 1px solid rgba(233,30,99,0.15); margin-bottom: 8px; }
     .journey-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 600; }
     .journey-awareness { background: rgba(233,30,99,0.15); color: #e91e63; }
     .journey-consideration { background: rgba(156,39,176,0.15); color: #9c27b0; }
@@ -11,10 +12,9 @@
 </style>
 {% endblock %}
 {% block content %}
-<div class="container py-4">
     <div class="d-flex justify-content-between align-items-start mb-4">
         <div>
-            <h2 class="text-white"><i class="bi bi-file-text me-2" style="color:var(--accent-color);"></i>Content Strategy</h2>
+            <h2 class="text-white"><i class="bi bi-file-text me-2" style="color:var(--pt-interactive-accent);"></i>Content Strategy</h2>
             <p style="color:#8b949e;">Content performance analysis across the buyer journey with engagement tracking</p>
         </div>
     </div>

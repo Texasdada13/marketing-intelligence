@@ -1,17 +1,17 @@
 {% extends "base.html" %}
 {% block title %}Channel Optimization - Marketing Intelligence{% endblock %}
+{% block page_title %}Channel Optimization{% endblock %}
 {% block extra_css %}
 <style>
-    .channel-card { padding: 16px; border-radius: 10px; background: var(--card-bg); border: 1px solid rgba(233,30,99,0.15); margin-bottom: 10px; }
+    .channel-card { padding: 16px; border-radius: 10px; background: var(--pt-bg-surface); border: 1px solid rgba(233,30,99,0.15); margin-bottom: 10px; }
     .alloc-bar { height: 12px; border-radius: 6px; background: rgba(255,255,255,0.1); overflow: hidden; }
     .alloc-fill { height: 100%; border-radius: 6px; }
 </style>
 {% endblock %}
 {% block content %}
-<div class="container py-4">
     <div class="d-flex justify-content-between align-items-start mb-4">
         <div>
-            <h2 class="text-white"><i class="bi bi-diagram-3 me-2" style="color:var(--accent-color);"></i>Channel Optimization</h2>
+            <h2 class="text-white"><i class="bi bi-diagram-3 me-2" style="color:var(--pt-interactive-accent);"></i>Channel Optimization</h2>
             <p style="color:#8b949e;">Analyze channel performance, optimize budget allocation, and maximize ROAS</p>
         </div>
     </div>
@@ -120,7 +120,7 @@ const SUGGESTIONS = [
 ];
 
 document.getElementById('suggestions').innerHTML = SUGGESTIONS.map(s =>
-    `<div class="d-flex align-items-start gap-2 mb-3"><i class="bi bi-arrow-right-circle" style="color:var(--accent-color);margin-top:2px;"></i><div><span style="color:#e6edf3;font-size:0.9rem;">${s.action}</span><br><small style="color:#4caf50;">${s.impact}</small><br><small style="color:#8b949e;">${s.reason}</small></div></div>`
+    `<div class="d-flex align-items-start gap-2 mb-3"><i class="bi bi-arrow-right-circle" style="color:var(--pt-interactive-accent);margin-top:2px;"></i><div><span style="color:#e6edf3;font-size:0.9rem;">${s.action}</span><br><small style="color:#4caf50;">${s.impact}</small><br><small style="color:#8b949e;">${s.reason}</small></div></div>`
 ).join('');
 </script>
 {% endblock %}

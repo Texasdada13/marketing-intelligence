@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% block title %}Analytics Integrations{% endblock %}
+{% block page_title %}Analytics Integrations{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -10,10 +11,10 @@
         padding: 1.5rem;
         margin-bottom: 1rem;
         transition: all 0.3s ease;
-        background: var(--card-bg);
+        background: var(--pt-bg-surface);
     }
     .integration-card:hover {
-        border-color: var(--accent-color);
+        border-color: var(--pt-interactive-accent);
         box-shadow: 0 4px 15px rgba(233, 30, 99, 0.2);
     }
     .integration-card.connected {
@@ -21,7 +22,7 @@
         background: linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, rgba(76, 175, 80, 0.05) 100%);
     }
     .integration-card.demo {
-        border-color: var(--accent-color);
+        border-color: var(--pt-interactive-accent);
         background: linear-gradient(135deg, rgba(233, 30, 99, 0.1) 0%, rgba(156, 39, 176, 0.05) 100%);
     }
     .integration-icon {
@@ -35,7 +36,7 @@
         margin-bottom: 1rem;
     }
     .ga-icon { background: linear-gradient(135deg, #f9ab00 0%, #e37400 100%); color: white; }
-    .demo-icon { background: var(--primary-gradient); color: white; }
+    .demo-icon { background: var(--pt-gradient-primary); color: white; }
     .status-badge {
         padding: 0.25rem 0.75rem;
         border-radius: 20px;
@@ -44,9 +45,9 @@
     }
     .status-connected { background: rgba(76, 175, 80, 0.2); color: #4caf50; }
     .status-not-connected { background: rgba(255, 255, 255, 0.1); color: #888; }
-    .status-demo { background: rgba(233, 30, 99, 0.2); color: var(--accent-color); }
+    .status-demo { background: rgba(233, 30, 99, 0.2); color: var(--pt-interactive-accent); }
     .metric-card {
-        background: var(--card-bg);
+        background: var(--pt-bg-surface);
         border-radius: 12px;
         padding: 1.5rem;
         text-align: center;
@@ -54,7 +55,7 @@
     .metric-value {
         font-size: 2.5rem;
         font-weight: 700;
-        background: var(--primary-gradient);
+        background: var(--pt-gradient-primary);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
     }
@@ -70,7 +71,7 @@
         font-size: 0.9rem;
     }
     .data-table th {
-        border-bottom: 2px solid var(--accent-color);
+        border-bottom: 2px solid var(--pt-interactive-accent);
         color: #888;
         font-weight: 600;
     }
@@ -79,7 +80,6 @@
 {% endblock %}
 
 {% block content %}
-<div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h2 class="mb-1"><i class="bi bi-plug text-primary me-2"></i>Analytics Integrations</h2>

@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% block title %}AI CMO Consultant{% endblock %}
+{% block page_title %}AI CMO Consultant{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -26,13 +27,13 @@
     }
 
     .message.user {
-        background: var(--primary-gradient);
+        background: var(--pt-gradient-primary);
         margin-left: auto;
         color: white;
     }
 
     .message.assistant {
-        background: var(--card-bg);
+        background: var(--pt-bg-surface);
         border: 1px solid rgba(233, 30, 99, 0.2);
     }
 
@@ -43,13 +44,13 @@
 
     .chat-input-area {
         padding: 1rem;
-        background: var(--card-bg);
+        background: var(--pt-bg-surface);
         border-radius: 12px;
         margin-top: 1rem;
     }
 
     .mode-selector {
-        background: var(--card-bg);
+        background: var(--pt-bg-surface);
         border-radius: 12px;
         padding: 1rem;
         margin-bottom: 1rem;
@@ -66,7 +67,7 @@
     }
 
     .mode-btn:hover, .mode-btn.active {
-        background: var(--primary-gradient);
+        background: var(--pt-gradient-primary);
         border-color: transparent;
         color: white;
     }
@@ -186,7 +187,7 @@
     }
 
     .context-panel {
-        background: var(--card-bg);
+        background: var(--pt-bg-surface);
         border-radius: 12px;
         padding: 1rem;
         margin-bottom: 1rem;
@@ -204,7 +205,6 @@
 {% endblock %}
 
 {% block content %}
-<div class="container py-4">
     <div class="row">
         <div class="col-lg-3">
             <div class="mode-selector">

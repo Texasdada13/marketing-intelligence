@@ -16,6 +16,8 @@ from src.demo.data_generator import create_marketing_demo_generator
 from src.reports.report_generator import create_report_generator
 from src.alerts.alert_engine import create_alert_engine
 from src.integrations import MarketingIntegrationManager, IntegrationType
+from patriot_ui import init_ui
+from patriot_ui.config import NavItem, NavSection
 
 
 def create_app():
@@ -31,6 +33,29 @@ def create_app():
 
     with app.app_context():
         db.create_all()
+
+    init_ui(app,
+        product_name="Marketing Intelligence",
+        product_icon="bi-megaphone",
+        show_org_selector=True,
+        nav_sections=[
+            NavSection("Overview", [
+                NavItem("Dashboard", "bi-speedometer2", "/dashboard"),
+                NavItem("AI CMO", "bi-chat-dots", "/chat"),
+            ]),
+            NavSection("Analytics", [
+                NavItem("Campaign Analysis", "bi-bullseye", "/campaign-analysis"),
+                NavItem("Channel Optimization", "bi-bar-chart-steps", "/channel-optimization"),
+                NavItem("Funnel Analytics", "bi-funnel", "/funnel-analytics"),
+                NavItem("Content Strategy", "bi-file-text", "/content-strategy"),
+                NavItem("ROI Analysis", "bi-graph-up-arrow", "/roi-analysis"),
+                NavItem("Industry Benchmarks", "bi-trophy", "/industry-benchmarks"),
+            ]),
+            NavSection("Connect", [
+                NavItem("Integrations", "bi-plug", "/integrations"),
+            ]),
+        ]
+    )
 
     # Initialize AI engine
     try:
